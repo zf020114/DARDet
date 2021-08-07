@@ -1,0 +1,2 @@
+python ./tools/test.py /media/zf/E/Dataset/dota1-split-1024/workdir/DPRnet_r50_59_3090/dprnet_r50_fpn_1x_dcn_test.py
+ /media/zf/E/Dataset/dota1-split-1024/workdir/DPRnet_r50_59_3090/epoch_24.pth  --eval bbox
