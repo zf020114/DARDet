@@ -7,7 +7,7 @@
   <p align="center"> <img src="https://raw.github.com/zf020114/DARDet/master/Figs/framework.png" width="100%"></p>
  
 #### 2. *Our DARDet significantly achieve state-of-the-art performance on the DOTA, UCAS-AOD, and HRSC2016 datasets with high efficiency..*
-  <p align="center"> <img src="https://raw.github.com/zf020114/DARDet/master/Figs/tabel.png" width="100%"></p>
+  <p align="center"> <img src="https://raw.github.com/zf020114/DARDet/master/Figs/table.png" width="100%"></p>
   <p align="center"> <img src="https://raw.github.com/zf020114/DARDet/master/Figs/result.png" width="100%"></p>
 
 
@@ -15,8 +15,8 @@
 
 |Model          |    Backbone     |    MS  |  Rotate | Lr schd  | Inf time (fps) | box AP| Download|
 |:-------------:| :-------------: | :-----:| :-----: | :-----:  | :------------: | :----: | :---------------------------------------------------------------------------------------: |
-|DARDet         |    R-50-FPN     |   -     |  -     |   1x     |      12.7      |  77.61 |    [model](https://drive.google.com/file/d/1W-JPfoBPHdOxY6KqsD0ZhhLjqNBS7UUN/view?usp=sharing)    |
-|DARDet         |    R-50-FPN     |   -     |  ✓    |   2x     |      12.7      |  78.74 |     [model](https://drive.google.com/file/d/1Jkbx-WvKhokEOlWR7WLKxTpH4hDTp-Tb/view?usp=sharing)     |
+|DARDet         |    R-50-FPN     |   -     |  -     |   1x     |      12.7      |  77.61 | [cfg](configs/ReDet/dardet_r50_fpn_1x_dcn_test.py)|[model](https://pan.baidu.com/s/1aspypaz8a7QvFyUdDR986g)    |
+|DARDet         |    R-50-FPN     |   -     |  ✓    |   2x     |      12.7      |  78.74 |  [cfg](configs/ReDet/dardet_r50_fpn_1x_dcn_rotate_test.py)|[model](https://pan.baidu.com/s/1VPsAB3Kb90IqJTluH6lFHw)     |
 
 
 ## Installation
