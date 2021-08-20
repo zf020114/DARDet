@@ -13,10 +13,10 @@
 
 ## Benchmark and model zoo
 
-|Model          |    Backbone     |    MS  |  Rotate | Lr schd  | Inf time (fps) | box AP (ori./now) | Download|
+|Model          |    Backbone     |    MS  |  Rotate | Lr schd  | Inf time (fps) | box AP| Download|
 |:-------------:| :-------------: | :-----:| :-----: | :-----:  | :------------: | :----: | :---------------------------------------------------------------------------------------: |
 |DARDet         |    R-50-FPN     |   -     |  -     |   1x     |      12.7      |  77.61 |    [model](https://drive.google.com/file/d/1W-JPfoBPHdOxY6KqsD0ZhhLjqNBS7UUN/view?usp=sharing)    |
-|DARDet         |    R-50-FPN     |   -     |  ✓    |   2x     |      12.7      |  78.74 |    [model](https://drive.google.com/file/d/1Jkbx-WvKhokEOlWR7WLKxTpH4hDTp-Tb/view?usp=sharing)     |
+|DARDet         |    R-50-FPN     |   -     |  ✓    |   2x     |      12.7      |  78.74 |     [model](https://drive.google.com/file/d/1Jkbx-WvKhokEOlWR7WLKxTpH4hDTp-Tb/view?usp=sharing)     |
 
 
 ## Installation
