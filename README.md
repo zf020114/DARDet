@@ -4,11 +4,11 @@
 
 ## *Highlights:*
 #### 1. *We develop a new dense anchor-free rotated object detection architecture (DARDet), which directly predicts five parameters of OBB at each spatial location.*
-  <p align="center"> <img src="https://raw.github.com/zf020114/DARDet/master/Figs/framework.png" width="100%"></p>
+  <p align="center"> <img src="https://raw.github.com/zf020114/DARDet/master/Figs/framework.PNG" width="100%"></p>
  
 #### 2. *Our DARDet significantly achieve state-of-the-art performance on the DOTA, UCAS-AOD, and HRSC2016 datasets with high efficiency..*
   <p align="center"> <img src="https://raw.github.com/zf020114/DARDet/master/Figs/table.png" width="100%"></p>
-  <p align="center"> <img src="https://raw.github.com/zf020114/DARDet/master/Figs/result.png" width="100%"></p>
+  <p align="center"> <img src="https://raw.github.com/zf020114/DARDet/master/Figs/result.PNG" width="100%"></p>
 
 
 ## Benchmark and model zoo
