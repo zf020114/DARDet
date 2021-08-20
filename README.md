@@ -11,7 +11,7 @@
   <p align="center"> <img src="https://raw.github.com/zf020114/DARDet/master/Figs/result.PNG" width="100%"></p>
 
 
-## Benchmark and model zoo
+## Benchmark and model zoo, with extracting code **nudt**.
 
 |Model          |    Backbone     |    MS  |  Rotate | Lr schd  | Inf time (fps) | box AP| Download|
 |:-------------:| :-------------: | :-----:| :-----: | :-----:  | :------------: | :----: | :---------------------------------------------------------------------------------------: |
