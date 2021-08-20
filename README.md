@@ -15,8 +15,8 @@
 
 |Model          |    Backbone     |    MS  |  Rotate | Lr schd  | Inf time (fps) | box AP| Download|
 |:-------------:| :-------------: | :-----:| :-----: | :-----:  | :------------: | :----: | :---------------------------------------------------------------------------------------: |
-|DARDet         |    R-50-FPN     |   -     |  -     |   1x     |      12.7      |  77.61 | [cfg](configs/ReDet/dardet_r50_fpn_1x_dcn_test.py)|[model](https://pan.baidu.com/s/1aspypaz8a7QvFyUdDR986g)    |
-|DARDet         |    R-50-FPN     |   -     |  ✓    |   2x     |      12.7      |  78.74 |  [cfg](configs/ReDet/dardet_r50_fpn_1x_dcn_rotate_test.py)|[model](https://pan.baidu.com/s/1VPsAB3Kb90IqJTluH6lFHw)     |
+|DARDet         |    R-50-FPN     |   -     |  -     |   1x     |      12.7      |  77.61 | [cfg](configs/ReDet/dardet_r50_fpn_1x_dcn_test.py)[model](https://pan.baidu.com/s/1aspypaz8a7QvFyUdDR986g)    |
+|DARDet         |    R-50-FPN     |   -     |  ✓    |   2x     |      12.7      |  78.74 |  [cfg](configs/ReDet/dardet_r50_fpn_1x_dcn_rotate_test.py)[model](https://pan.baidu.com/s/1VPsAB3Kb90IqJTluH6lFHw)     |
 
 
 ## Installation
