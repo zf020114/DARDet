@@ -3,8 +3,6 @@ import numpy as np
 import cv2
 import copy
 import dota_utils as util
-from multiprocessing import Pool
-from functools import partial
 
 class splitbase():
     def __init__(self,
@@ -12,9 +10,7 @@ class splitbase():
                  dstpath,
                  gap=100,
                  subsize=1024,
-                 ext='.png',
-                 padding=True,
-                 num_process=32):
+                 ext='.png'):
         self.srcpath = srcpath
         self.outpath = dstpath
         self.gap = gap
@@ -23,39 +19,24 @@ class splitbase():
         self.srcpath = srcpath
         self.dstpath = dstpath
         self.ext = ext
-        self.padding = padding
-        self.pool = Pool(num_process)
-
-        if not os.path.isdir(self.outpath):
-            os.mkdir(self.outpath)
-
-    def saveimagepatches(self, img, subimgname, left, up, ext='.png'):
+    def saveimagepatches(self, img, subimgname, left, up):
         subimg = copy.deepcopy(img[up: (up + self.subsize), left: (left + self.subsize)])
-        outdir = os.path.join(self.dstpath, subimgname + ext)
-        h, w, c = np.shape(subimg)
-        if (self.padding):
-            outimg = np.zeros((self.subsize, self.subsize, 3))
-            outimg[0:h, 0:w, :] = subimg
-            cv2.imwrite(outdir, outimg)
-        else:
-            cv2.imwrite(outdir, subimg)
+        outdir = os.path.join(self.dstpath, subimgname + self.ext)
+        cv2.imwrite(outdir, subimg)
 
     def SplitSingle(self, name, rate, extent):
-        img = cv2.imread(os.path.join(self.srcpath, name + extent))
+        img = cv2.imread(os.path.join(self.srcpath, name + extent), cv2.IMREAD_UNCHANGED)
         assert np.shape(img) != ()
 
         if (rate != 1):
-            resizeimg = cv2.resize(img, None, fx=rate, fy=rate, interpolation=cv2.INTER_CUBIC)
+            resizeimg = cv2.resize(img, None, fx=rate, fy=rate, interpolation = cv2.INTER_CUBIC)
         else:
             resizeimg = img
         outbasename = name + '__' + str(rate) + '__'
 
         weight = np.shape(resizeimg)[1]
         height = np.shape(resizeimg)[0]
-
-        # if (max(weight, height) < self.subsize/2):
-        #     return
-
+        
         left, up = 0, 0
         while (left < weight):
             if (left + self.subsize >= weight):
@@ -65,7 +46,7 @@ class splitbase():
                 if (up + self.subsize >= height):
                     up = max(height - self.subsize, 0)
                 subimgname = outbasename + str(left) + '___' + str(up)
-                self.saveimagepatches(resizeimg, subimgname, left, up, ext=extent)
+                self.saveimagepatches(resizeimg, subimgname, left, up)
                 if (up + self.subsize >= height):
                     break
                 else:
@@ -76,26 +57,13 @@ class splitbase():
                 left = left + self.slide
 
     def splitdata(self, rate):
-
+        
         imagelist = util.GetFileFromThisRootDir(self.srcpath)
         imagenames = [util.custombasename(x) for x in imagelist if (util.custombasename(x) != 'Thumbs')]
-
-        worker = partial(self.SplitSingle, rate=rate, extent=self.ext)
-
-        self.pool.map(worker, imagenames)
-        #
-        # for name in imagenames:
-        #     self.SplitSingle(name, rate, self.ext)
-    def __getstate__(self):
-        self_dict = self.__dict__.copy()
-        del self_dict['pool']
-        return self_dict
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-
+        for name in imagenames:
+            self.SplitSingle(name, rate, self.ext)
 if __name__ == '__main__':
-    split = splitbase(r'/home/dingjian/data/dota/val/images',
-                      r'/home/dingjian/data/dota/valsplit',
-                      num_process=32)
+    split = splitbase(r'/home/dingjian/data/GF3Process/tiff',
+                      r'/home/dingjian/data/GF3Process/subimg',
+                      ext='.tiff')
     split.splitdata(1)

@@ -5,32 +5,38 @@
     Note, the evaluation is on the large scale images
 """
 import os
-import re
-import sys
-
 import numpy as np
+import re
+import time
+import sys
+# sys.path.insert(0,'..')
+# print('fffffffffffffffffff')
+# sys.path.append("/project/jmhan/AerialDetection/DOTA_devkit/")
 
-sys.path.insert(0, '..')
-import DOTA_devkit.dota_utils as util
-import DOTA_devkit.polyiou.polyiou as polyiou
+try:
+    import dota_utils as util
+except:
+    import DOTA_devkit.dota_utils as util
+import DOTA_devkit.polyiou as polyiou
 import pdb
 import math
 from multiprocessing import Pool
 from functools import partial
+try:
+    from DOTA_devkit.nms import obb_hybrid_NMS, obb_HNMS
+except:
+    from nms import obb_hybrid_NMS, obb_HNMS # modified by lyx 2020.9.20
 
-## the thresh for nms when merge image
-nms_thresh = 0.1
-
-
+#TODO: there is a bug at 5 decimal places of mAP when using the program
 def py_cpu_nms_poly(dets, thresh):
     scores = dets[:, 8]
     polys = []
     areas = []
     for i in range(len(dets)):
         tm_polygon = polyiou.VectorDouble([dets[i][0], dets[i][1],
-                                           dets[i][2], dets[i][3],
-                                           dets[i][4], dets[i][5],
-                                           dets[i][6], dets[i][7]])
+                                            dets[i][2], dets[i][3],
+                                            dets[i][4], dets[i][5],
+                                            dets[i][6], dets[i][7]])
         polys.append(tm_polygon)
     order = scores.argsort()[::-1]
 
@@ -44,23 +50,24 @@ def py_cpu_nms_poly(dets, thresh):
             ovr.append(iou)
         ovr = np.array(ovr)
 
-        # print('ovr: ', ovr)
-        # print('thresh: ', thresh)
         try:
             if math.isnan(ovr[0]):
                 pdb.set_trace()
         except:
             pass
         inds = np.where(ovr <= thresh)[0]
-        # print('inds: ', inds)
-
         order = order[inds + 1]
 
     return keep
 
 
 def py_cpu_nms_poly_fast(dets, thresh):
-    obbs = dets[:, 0:-1]
+    # TODO: test it
+    try:
+        obbs = dets[:, 0:-1]
+    except:
+        print('fail index')
+        pdb.set_trace()
     x1 = np.min(obbs[:, 0::2], axis=1)
     y1 = np.min(obbs[:, 1::2], axis=1)
     x2 = np.max(obbs[:, 0::2], axis=1)
@@ -71,9 +78,9 @@ def py_cpu_nms_poly_fast(dets, thresh):
     polys = []
     for i in range(len(dets)):
         tm_polygon = polyiou.VectorDouble([dets[i][0], dets[i][1],
-                                           dets[i][2], dets[i][3],
-                                           dets[i][4], dets[i][5],
-                                           dets[i][6], dets[i][7]])
+                                            dets[i][2], dets[i][3],
+                                            dets[i][4], dets[i][5],
+                                            dets[i][6], dets[i][7]])
         polys.append(tm_polygon)
     order = scores.argsort()[::-1]
 
@@ -82,50 +89,31 @@ def py_cpu_nms_poly_fast(dets, thresh):
         ovr = []
         i = order[0]
         keep.append(i)
-        # if order.size == 0:
-        #     break
         xx1 = np.maximum(x1[i], x1[order[1:]])
         yy1 = np.maximum(y1[i], y1[order[1:]])
         xx2 = np.minimum(x2[i], x2[order[1:]])
         yy2 = np.minimum(y2[i], y2[order[1:]])
-        # w = np.maximum(0.0, xx2 - xx1 + 1)
-        # h = np.maximum(0.0, yy2 - yy1 + 1)
         w = np.maximum(0.0, xx2 - xx1)
         h = np.maximum(0.0, yy2 - yy1)
         hbb_inter = w * h
         hbb_ovr = hbb_inter / (areas[i] + areas[order[1:]] - hbb_inter)
-        # h_keep_inds = np.where(hbb_ovr == 0)[0]
         h_inds = np.where(hbb_ovr > 0)[0]
         tmp_order = order[h_inds + 1]
         for j in range(tmp_order.size):
             iou = polyiou.iou_poly(polys[i], polys[tmp_order[j]])
             hbb_ovr[h_inds[j]] = iou
-            # ovr.append(iou)
-            # ovr_index.append(tmp_order[j])
-
-        # ovr = np.array(ovr)
-        # ovr_index = np.array(ovr_index)
-        # print('ovr: ', ovr)
-        # print('thresh: ', thresh)
         try:
             if math.isnan(ovr[0]):
                 pdb.set_trace()
         except:
             pass
         inds = np.where(hbb_ovr <= thresh)[0]
-
-        # order_obb = ovr_index[inds]
-        # print('inds: ', inds)
-        # order_hbb = order[h_keep_inds + 1]
         order = order[inds + 1]
-        # pdb.set_trace()
-        # order = np.concatenate((order_obb, order_hbb), axis=0).astype(np.int)
     return keep
-
 
 def py_cpu_nms(dets, thresh):
     """Pure Python NMS baseline."""
-    # print('dets:', dets)
+    #print('dets:', dets)
     x1 = dets[:, 0]
     y1 = dets[:, 1]
     x2 = dets[:, 2]
@@ -155,42 +143,30 @@ def py_cpu_nms(dets, thresh):
 
     return keep
 
-
 def nmsbynamedict(nameboxdict, nms, thresh):
     nameboxnmsdict = {x: [] for x in nameboxdict}
     for imgname in nameboxdict:
-        # print('imgname:', imgname)
-        # keep = py_cpu_nms(np.array(nameboxdict[imgname]), thresh)
-        # print('type nameboxdict:', type(nameboxnmsdict))
-        # print('type imgname:', type(imgname))
-        # print('type nms:', type(nms))
         keep = nms(np.array(nameboxdict[imgname]), thresh)
-        # print('keep:', keep)
         outdets = []
-        # print('nameboxdict[imgname]: ', nameboxnmsdict[imgname])
         for index in keep:
-            # print('index:', index)
             outdets.append(nameboxdict[imgname][index])
         nameboxnmsdict[imgname] = outdets
     return nameboxnmsdict
-
-
 def poly2origpoly(poly, x, y, rate):
     origpoly = []
-    for i in range(int(len(poly) / 2)):
+    for i in range(int(len(poly)/2)):
         tmp_x = float(poly[i * 2] + x) / float(rate)
         tmp_y = float(poly[i * 2 + 1] + y) / float(rate)
         origpoly.append(tmp_x)
         origpoly.append(tmp_y)
     return origpoly
 
-
-def mergesingle(dstpath, nms, fullname):
+def mergesingle(dstpath, nms, nms_thresh, fullname):
     name = util.custombasename(fullname)
-    # print('name:', name)
+    #print('name:', name)
     dstname = os.path.join(dstpath, name + '.txt')
-    print(dstname)
     with open(fullname, 'r') as f_in:
+        # print('fullname: ', fullname)
         nameboxdict = {}
         lines = f_in.readlines()
         splitlines = [x.strip().split(' ') for x in lines]
@@ -199,7 +175,7 @@ def mergesingle(dstpath, nms, fullname):
             splitname = subname.split('__')
             oriname = splitname[0]
             pattern1 = re.compile(r'__\d+___\d+')
-            # print('subname:', subname)
+            #print('subname:', subname)
             x_y = re.findall(pattern1, subname)
             x_y_2 = re.findall(r'\d+', x_y[0])
             x, y = int(x_y_2[0]), int(x_y_2[1])
@@ -221,58 +197,52 @@ def mergesingle(dstpath, nms, fullname):
         with open(dstname, 'w') as f_out:
             for imgname in nameboxnmsdict:
                 for det in nameboxnmsdict[imgname]:
-                    # print('det:', det)
+                    #print('det:', det)
                     confidence = det[-1]
                     bbox = det[0:-1]
                     outline = imgname + ' ' + str(confidence) + ' ' + ' '.join(map(str, bbox))
-                    # print('outline:', outline)
+                    #print('outline:', outline)
                     f_out.write(outline + '\n')
 
-
-def mergebase_parallel(srcpath, dstpath, nms):
+def mergebase_parallel(srcpath, dstpath, nms, nms_thresh):
     pool = Pool(16)
     filelist = util.GetFileFromThisRootDir(srcpath)
 
-    mergesingle_fn = partial(mergesingle, dstpath, nms)
+    mergesingle_fn = partial(mergesingle, dstpath, nms, nms_thresh)
     # pdb.set_trace()
     pool.map(mergesingle_fn, filelist)
 
-
-def mergebase(srcpath, dstpath, nms):
+def mergebase(srcpath, dstpath, nms, nms_thresh):
     filelist = util.GetFileFromThisRootDir(srcpath)
     for filename in filelist:
-        mergesingle(dstpath, nms, filename)
+        mergesingle(dstpath, nms, nms_thresh, filename)
 
-
-def mergebyrec(srcpath, dstpath):
-    """
-    srcpath: result files before merge and nms
-    dstpath: result files after merge and nms
-    """
-    # srcpath = r'E:\bod-dataset\results\bod-v3_rfcn_2000000'
-    # dstpath = r'E:\bod-dataset\results\bod-v3_rfcn_2000000_nms'
-
-    mergebase(srcpath,
+def mergebyrec(srcpath, dstpath, nms_thresh=0.3):
+    mergebase_parallel(srcpath,
               dstpath,
-              py_cpu_nms)
+              py_cpu_nms, nms_thresh)
 
-
-def mergebypoly(srcpath, dstpath):
+def mergebypoly_multiprocess(srcpath, dstpath, nms_type='py_cpu_nms_poly_fast', o_thresh=0.1, h_thresh=0.5):
     """
     srcpath: result files before merge and nms
     dstpath: result files after merge and nms
     """
     # srcpath = r'/home/dingjian/evaluation_task1/result/faster-rcnn-59/comp4_test_results'
     # dstpath = r'/home/dingjian/evaluation_task1/result/faster-rcnn-59/testtime'
-
-    # mergebase(srcpath,
-    #           dstpath,
-    #           py_cpu_nms_poly)
-    mergebase_parallel(srcpath,
-                       dstpath,
-                       py_cpu_nms_poly_fast)
-
-
+    if nms_type == 'py_cpu_nms_poly_fast':
+        mergebase_parallel(srcpath,
+                           dstpath,
+                           py_cpu_nms_poly_fast, o_thresh)
+    elif nms_type == 'obb_HNMS':
+        mergebase_parallel(srcpath,
+                           dstpath,
+                           obb_HNMS, o_thresh)
+    elif nms_type == 'obb_hybrid_NMS':
+        obb_hybrid_NMS_partial = partial(obb_hybrid_NMS, o_thresh)
+        mergebase_parallel(srcpath,
+                           dstpath,
+                           obb_hybrid_NMS_partial, h_thresh)
 if __name__ == '__main__':
-    mergebyrec(r'work_dirs/temp/result_raw', r'work_dirs/temp/result_task2')
-# mergebyrec()
+    # mergebypoly(r'/home/dingjian/code/DOTA_devkit/Test_nms2/Task1_results', r'/home/dingjian/code/DOTA_devkit/Test_nms2/Task1_results_0.1_nms_fast')
+    mergebypoly_multiprocess(r'/project/jmhan/AerialDetection/work_dirs/ensemble_test/Task1_results/',
+               r'/project/jmhan/AerialDetection/work_dirs/ensemble_test/Task1_results_nms')

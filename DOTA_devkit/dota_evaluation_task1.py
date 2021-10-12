@@ -1,22 +1,11 @@
-# --------------------------------------------------------
-# dota_evaluation_task1
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Jian Ding, based on code from Bharath Hariharan
-# --------------------------------------------------------
-
-"""
-    To use the code, users should to config detpath, annopath and imagesetfile
-    detpath is the path for 15 result files, for the format, you can refer to "http://captain.whu.edu.cn/DOTAweb/tasks.html"
-    search for PATH_TO_BE_CONFIGURED to config the paths
-    Note, the evaluation is on the large scale images
-"""
-# import cPickle
+import os
+import xml.etree.ElementTree as ET
+import matplotlib.pyplot as plt
 import numpy as np
-
-try:
-    from polyiou import polyiou
-except:
-    from DOTA_devkit.polyiou import polyiou
+import sys
+sys.path.insert(1,os.path.dirname(__file__))
+import polyiou
+import argparse
 
 
 def parse_gt(filename):
@@ -25,7 +14,7 @@ def parse_gt(filename):
     :return: all instances in a picture
     """
     objects = []
-    with  open(filename, 'r') as f:
+    with open(filename, 'r') as f:
         while True:
             line = f.readline()
             if line:
@@ -38,7 +27,7 @@ def parse_gt(filename):
                 if (len(splitlines) == 9):
                     object_struct['difficult'] = 0
                 elif (len(splitlines) == 10):
-                    object_struct['difficult'] = int(float(splitlines[9]))
+                    object_struct['difficult'] = int(splitlines[9])
                 object_struct['bbox'] = [float(splitlines[0]),
                                          float(splitlines[1]),
                                          float(splitlines[2]),
@@ -117,10 +106,6 @@ def voc_eval(detpath,
     # assumes imagesetfile is a text file with each line an image name
     # cachedir caches the annotations in a pickle file
 
-    # first load gt
-    # if not os.path.isdir(cachedir):
-    #   os.mkdir(cachedir)
-    # cachefile = os.path.join(cachedir, 'annots.pkl')
     # read list of images
     with open(imagesetfile, 'r') as f:
         lines = f.readlines()
@@ -128,7 +113,7 @@ def voc_eval(detpath,
 
     recs = {}
     for i, imagename in enumerate(imagenames):
-        # print('parse_files name: ', annopath.format(imagename))
+        #print('parse_files name: ', annopath.format(imagename))
         recs[imagename] = parse_gt(annopath.format(imagename))
 
     # extract gt objects for this class
@@ -159,10 +144,12 @@ def voc_eval(detpath,
     sorted_ind = np.argsort(-confidence)
     sorted_scores = np.sort(-confidence)
 
-    ## note the usage only in numpy not for list
-    if np.sum(sorted_ind)==0:
-        return 0.0,0.0,0.0
-    BB = BB[sorted_ind, :]
+    # note the usage only in numpy not for list
+    try:
+        BB = BB[sorted_ind, :]
+    except:
+        print('no index')
+        return 0,0,0
     image_ids = [image_ids[x] for x in sorted_ind]
     # go down dets and mark TPs and FPs
     nd = len(image_ids)
@@ -174,13 +161,12 @@ def voc_eval(detpath,
         ovmax = -np.inf
         BBGT = R['bbox'].astype(float)
 
-        ## compute det bb with each BBGT
+        # compute det bb with each BBGT
         if BBGT.size > 0:
             # compute overlaps
             # intersection
 
             # 1. calculate the overlaps between hbbs, if the iou between hbbs are 0, the iou between obbs are 0, too.
-            # pdb.set_trace()
             BBGT_xmin = np.min(BBGT[:, 0::2], axis=1)
             BBGT_ymin = np.min(BBGT[:, 1::2], axis=1)
             BBGT_xmax = np.max(BBGT[:, 0::2], axis=1)
@@ -212,10 +198,11 @@ def voc_eval(detpath,
             def calcoverlaps(BBGT_keep, bb):
                 overlaps = []
                 for index, GT in enumerate(BBGT_keep):
-                    overlap = polyiou.iou_poly(polyiou.VectorDouble(BBGT_keep[index]), polyiou.VectorDouble(bb))
+
+                    overlap = polyiou.iou_poly(polyiou.VectorDouble(
+                        BBGT_keep[index]), polyiou.VectorDouble(bb))
                     overlaps.append(overlap)
                 return overlaps
-
             if len(BBGT_keep) > 0:
                 overlaps = calcoverlaps(BBGT_keep, bb)
 
@@ -236,10 +223,10 @@ def voc_eval(detpath,
 
     # compute precision recall
 
-    # print('check fp:', fp)
-    # print('check tp', tp)
+    print('check fp:', fp)
+    print('check tp', tp)
 
-    # print('npos num:', npos)
+    print('npos num:', npos)
     fp = np.cumsum(fp)
     tp = np.cumsum(tp)
 
@@ -252,19 +239,13 @@ def voc_eval(detpath,
     return rec, prec, ap
 
 
-def main():
-    detpath = r'/home/hjm/mmdetection/work_dirs/cascade_s2anet_r50_fpn_1x_dota/results_after_nms/{:s}.txt'
-    annopath = r'data/dota/test/labelTxt/{:s}.txt'  # change the directory to the path of val/labelTxt, if you want to do evaluation on the valset
-    imagesetfile = r'data/dota/test/test.txt'
-
-    # For DOTA-v1.5
-    # classnames = ['plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
-    #             'basketball-court', 'storage-tank',  'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool', 'helicopter', 'container-crane']
+def dota_task1_eval(work_dir, det_dir):
+    detpath = os.path.join(det_dir, r'Task1_{:s}.txt')
+    annopath = r'data/dota/test/OrientlabelTxt-utf-8/{:s}.txt'
+    imagesetfile = r'data/dota/test/testset.txt'
     # For DOTA-v1.0
-    classnames = ['plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship',
-                  'tennis-court',
-                  'basketball-court', 'storage-tank', 'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool',
-                  'helicopter']
+    classnames = ['plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
+                  'basketball-court', 'storage-tank',  'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool', 'helicopter']
     classaps = []
     map = 0
     for classname in classnames:
@@ -276,7 +257,52 @@ def main():
                                  ovthresh=0.5,
                                  use_07_metric=True)
         map = map + ap
-        # print('rec: ', rec, 'prec: ', prec, 'ap: ', ap)
+        #print('rec: ', rec, 'prec: ', prec, 'ap: ', ap)
+        print('ap: ', ap)
+        classaps.append(ap)
+    map = map/len(classnames)
+    print('map:', map)
+    classaps = 100*np.array(classaps)
+    print('classaps: ', classaps)
+    # writing results to txt file
+    with open(os.path.join(work_dir, 'Task1_results.txt'), 'w') as f:
+        out_str = ''
+        out_str += 'mAP:'+str(map)+'\n'
+        out_str += 'APs:\n'
+        out_str += ' '.join([str(ap)for ap in classaps.tolist()])
+        f.write(out_str)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--work_dir',default='')
+    return parser.parse_args()
+
+def main():
+    args = parse_args()
+    detpath = os.path.join(args.work_dir,'Task1_results_nms/Task1_{:s}.txt')
+    # change the directory to the path of val/labelTxt, if you want to do evaluation on the valset
+    annopath = r'data/dota/test/OrientlabelTxt-utf-8/{:s}.txt'
+    imagesetfile = r'data/dota/test/testset.txt'
+
+    # For DOTA-v1.5
+    # classnames = ['plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
+    #             'basketball-court', 'storage-tank',  'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool', 'helicopter', 'container-crane']
+    # For DOTA-v1.0
+    classnames = ['plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
+                  'basketball-court', 'storage-tank',  'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool', 'helicopter']
+    classaps = []
+    map = 0
+    for classname in classnames:
+        print('classname:', classname)
+        rec, prec, ap = voc_eval(detpath,
+                                 annopath,
+                                 imagesetfile,
+                                 classname,
+                                 ovthresh=0.5,
+                                 use_07_metric=True)
+        map = map + ap
+        #print('rec: ', rec, 'prec: ', prec, 'ap: ', ap)
         print('ap: ', ap)
         classaps.append(ap)
 
@@ -294,9 +320,9 @@ def main():
         # plt.plot(rec, prec)
         # # plt.show()
         # plt.savefig('pr_curve/{}.png'.format(classname))
-    map = map / len(classnames)
+    map = map/len(classnames)
     print('map:', map)
-    classaps = 100 * np.array(classaps)
+    classaps = 100*np.array(classaps)
     print('classaps: ', classaps)
 
 

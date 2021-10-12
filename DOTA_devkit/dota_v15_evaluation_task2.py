@@ -10,7 +10,12 @@
     search for PATH_TO_BE_CONFIGURED to config the paths
     Note, the evaluation is on the large scale images
 """
+import xml.etree.ElementTree as ET
+import os
+#import cPickle
 import numpy as np
+import matplotlib.pyplot as plt
+import argparse
 
 
 def parse_gt(filename):
@@ -21,7 +26,17 @@ def parse_gt(filename):
         for splitline in splitlines:
             object_struct = {}
             object_struct['name'] = splitline[8]
+            # if (len(splitline) == 9):
+            #     object_struct['difficult'] = 0
+            # elif (len(splitline) == 10):
+            #     object_struct['difficult'] = int(splitline[9])
             object_struct['difficult'] = 0
+            # xs = [float(x) for x in splitline[:7:2]]
+            # ys = [float(y) for y in splitline[1:8:2]]
+            # object_struct['bbox'] = [int(min(xs)), int(
+            #     min(ys)), int(max(xs)), int(max(ys))]
+            # object_struct['area'] = (
+            #     int(max(xs))-int(min(xs)))*(int(max(ys))-int(min(ys)))
             object_struct['bbox'] = [int(float(splitline[0])),
                                      int(float(splitline[1])),
                                      int(float(splitline[4])),
@@ -29,6 +44,10 @@ def parse_gt(filename):
             w = int(float(splitline[4])) - int(float(splitline[0]))
             h = int(float(splitline[5])) - int(float(splitline[1]))
             object_struct['area'] = w * h
+            # print('area:', object_struct['area'])
+            # if object_struct['area'] < (15 * 15):
+            #     #print('area:', object_struct['area'])
+            #     object_struct['difficult'] = 1
             objects.append(object_struct)
     return objects
 
@@ -97,16 +116,20 @@ def voc_eval(detpath,
     # assumes imagesetfile is a text file with each line an image name
     # cachedir caches the annotations in a pickle file
 
+    # first load gt
+    # if not os.path.isdir(cachedir):
+    #   os.mkdir(cachedir)
+    #cachefile = os.path.join(cachedir, 'annots.pkl')
     # read list of images
     with open(imagesetfile, 'r') as f:
         lines = f.readlines()
     imagenames = [x.strip() for x in lines]
-    # print('imagenames: ', imagenames)
+    #print('imagenames: ', imagenames)
     # if not os.path.isfile(cachefile):
     # load annots
     recs = {}
     for i, imagename in enumerate(imagenames):
-        # print('parse_files name: ', annopath.format(imagename))
+        #print('parse_files name: ', annopath.format(imagename))
         recs[imagename] = parse_gt(annopath.format(imagename))
     # extract gt objects for this class
     class_recs = {}
@@ -128,14 +151,19 @@ def voc_eval(detpath,
     splitlines = [x.strip().split(' ') for x in lines]
     image_ids = [x[0] for x in splitlines]
     confidence = np.array([float(x[1]) for x in splitlines])
+    #print('check confidence: ', confidence)
     BB = np.array([[float(z) for z in x[2:]] for x in splitlines])
 
     # sort by confidence
     sorted_ind = np.argsort(-confidence)
     sorted_scores = np.sort(-confidence)
 
+    #print('check sorted_scores: ', sorted_scores)
+    #print('check sorted_ind: ', sorted_ind)
     BB = BB[sorted_ind, :]
     image_ids = [image_ids[x] for x in sorted_ind]
+    #print('check imge_ids: ', image_ids)
+    #print('imge_ids len:', len(image_ids))
     # go down dets and mark TPs and FPs
     nd = len(image_ids)
     tp = np.zeros(nd)
@@ -174,6 +202,7 @@ def voc_eval(detpath,
                     R['det'][jmax] = 1
                 else:
                     fp[d] = 1.
+                   # print('filename:', image_ids[d])
         else:
             fp[d] = 1.
 
@@ -194,16 +223,23 @@ def voc_eval(detpath,
 
     return rec, prec, ap
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--work_dir',default='')
+    return parser.parse_args()
 
 def main():
-    detpath = r'PATH_TO_BE_CONFIGURED/Task2_{:s}.txt'
-    annopath = r'PATH_TO_BE_CONFIGURED/{:s}.txt'  # change the directory to the path of val/labelTxt, if you want to do evaluation on the valset
-    imagesetfile = r'PATH_TO_BE_CONFIGURED/valset.txt'
+    args = parse_args()
+    detpath = os.path.join(args.work_dir, 'Task2_results_nms/Task2_{:s}.txt')
+    annopath = r'/project/jmhan/data/dota15/test/DOTA15_Task2_gt/{:s}.txt'
+    imagesetfile = r'data/dota15/test/testset.txt'
+
+    # detpath = r'PATH_TO_BE_CONFIGURED/Task2_{:s}.txt'
+    # annopath = r'PATH_TO_BE_CONFIGURED/{:s}.txt'# change the directory to the path of val/labelTxt, if you want to do evaluation on the valset
+    # imagesetfile = r'PATH_TO_BE_CONFIGURED/valset.txt'
     # For DOTA v1.5
-    classnames = ['plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship',
-                  'tennis-court',
-                  'basketball-court', 'storage-tank', 'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool',
-                  'helicopter', 'container-crane']
+    classnames = ['plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
+                  'basketball-court', 'storage-tank',  'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool', 'helicopter', 'container-crane']
     # For DOTA v1.0
     # classnames = ['plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
     #             'basketball-court', 'storage-tank',  'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool', 'helicopter']
@@ -218,7 +254,7 @@ def main():
                                  ovthresh=0.5,
                                  use_07_metric=True)
         map = map + ap
-        # print('rec: ', rec, 'prec: ', prec, 'ap: ', ap)
+        #print('rec: ', rec, 'prec: ', prec, 'ap: ', ap)
         print('ap: ', ap)
         classaps.append(ap)
 
@@ -228,9 +264,9 @@ def main():
         # plt.ylabel('precision')
         # plt.plot(rec, prec)
         # plt.show()
-    map = map / len(classnames)
+    map = map/len(classnames)
     print('map:', map)
-    classaps = 100 * np.array(classaps)
+    classaps = 100*np.array(classaps)
     print('classaps: ', classaps)
 
 

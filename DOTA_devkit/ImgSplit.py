@@ -1,7 +1,3 @@
-"""
--------------
-This is the multi-process version
-"""
 import os
 import codecs
 import numpy as np
@@ -11,9 +7,6 @@ import cv2
 import shapely.geometry as shgeo
 import dota_utils as util
 import copy
-from multiprocessing import Pool
-from functools import partial
-import time
 
 def choose_best_pointorder_fit_another(poly1, poly2):
     """
@@ -49,8 +42,7 @@ class splitbase():
                  thresh=0.7,
                  choosebestpoint=True,
                  ext = '.png',
-                 padding=True,
-                 num_process=8
+                 padding=True
                  ):
         """
         :param basepath: base path for dota data
@@ -78,7 +70,6 @@ class splitbase():
         self.choosebestpoint = choosebestpoint
         self.ext = ext
         self.padding = padding
-        self.pool = Pool(num_process)
         print('padding:', padding)
 
         # pdb.set_trace()
@@ -113,7 +104,7 @@ class splitbase():
 
     def saveimagepatches(self, img, subimgname, left, up):
         subimg = copy.deepcopy(img[up: (up + self.subsize), left: (left + self.subsize)])
-        outdir = os.path.join(self.outimagepath, subimgname + '.jpg')
+        outdir = os.path.join(self.outimagepath, subimgname + self.ext)
         h, w, c = np.shape(subimg)
         if (self.padding):
             outimg = np.zeros((self.subsize, self.subsize, 3))
@@ -215,11 +206,7 @@ class splitbase():
         :param extent: the image format
         :return:
         """
-        try:
-            img = cv2.imread(os.path.join(self.imagepath, name + extent))
-            print('img name:', name)
-        except:
-            print('img name:', name)
+        img = cv2.imread(os.path.join(self.imagepath, name + extent))
         if np.shape(img) == ():
             return
         fullname = os.path.join(self.labelpath, name + '.txt')
@@ -235,9 +222,6 @@ class splitbase():
         outbasename = name + '__' + str(rate) + '__'
         weight = np.shape(resizeimg)[1]
         height = np.shape(resizeimg)[0]
-
-        # if (max(weight, height) < self.subsize):
-        #     return
 
         left, up = 0, 0
         while (left < weight):
@@ -268,184 +252,15 @@ class splitbase():
 
         imagelist = GetFileFromThisRootDir(self.imagepath)
         imagenames = [util.custombasename(x) for x in imagelist if (util.custombasename(x) != 'Thumbs')]
+        for name in imagenames:
+            self.SplitSingle(name, rate, self.ext)
 
-        worker = partial(self.SplitSingle, rate=rate, extent=self.ext)
-        #
-        # for name in imagenames:
-        #     self.SplitSingle(name, rate, self.ext)
-        self.pool.map(worker, imagenames)
-
-    def __getstate__(self):
-        self_dict = self.__dict__.copy()
-        del self_dict['pool']
-        return self_dict
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
 if __name__ == '__main__':
     # example usage of ImgSplit
-    # start = time.clock()
-    # split = splitbase(r'/data/dj/dota/val',
-    #                    r'/data/dj/dota/val_1024_debugmulti-process_refactor') # time cost 19s
-    # # split.splitdata(1)
-    # # split.splitdata(2)
-    # split.splitdata(0.4)
-    #
-    # elapsed = (time.clock() - start)
-    # print("Time used:", elapsed)
-
-    # split = splitbase(r'/data/dota2/train',
-    #                    r'/data/dota2/train1024',
-    #                   gap=200,
-    #                   subsize=1024,
-    #                   num_process=32
-    #                   )
-    # split_train = splitbase(r'/data0/data_dj/dota2/train',
-    #                   r'/data0/data_dj/dota2/trainval1024_ms',
-    #                     gap=200,
-    #                     subsize=1024,
-    #                     num_process=30)
-    # split_train.splitdata(1.5)
-    # split_train.splitdata(0.5)
-    #
-    # split_val = splitbase(r'/data0/data_dj/dota2/val',
-    #                       r'/data0/data_dj/dota2/trainval1024_ms',
-    #                       gap=200,
-    #                       subsize=1024,
-    #                       num_process=30)
-    # split_val.splitdata(1.5)
-    # split_val.splitdata(0.5)
-
-
-    # split = splitbase(r'/home/dingjian/project/dota2/test-c1',
-    #                   r'/home/dingjian/project/dota2/test-c1-1024',
-    #                   gap=512,
-    #                   subsize=1024,
-    #                   num_process=16)
+    # split = splitbase(r'/data/dj/dota/trainval_large',
+    #                    r'/data/dj/dota/trainval_large-split-1024')
+    split = splitbase(r'/data/dj/dota/val',
+                       r'/data/dj/dota/val_1024_debugmulti-process') ## time cost: 4minute 16s
     # split.splitdata(1)
-
-
-    # split_train = splitbase(r'/data/mmlab-dota1.5/train',
-    #                   r'/data/mmlab-dota1.5/split-1024/trainval1024_ms',
-    #                     gap=200,
-    #                     subsize=1024,
-    #                     num_process=40)
-    # split_train.splitdata(1.5)
-    # split_train.splitdata(0.5)
-    #
-    # split_val = splitbase(r'/data/mmlab-dota1.5/val',
-    #                       r'/data/mmlab-dota1.5/split-1024/trainval1024_ms',
-    #                       gap=200,
-    #                       subsize=1024,
-    #                       num_process=40)
-    # split_val.splitdata(1.5)
-    # split_val.splitdata(0.5)
-    #
-    # split_train_single = splitbase('/data/mmlab-dota1.5/train',
-    #                                '/data/mmlab-dota1.5/split-1024/trainval1024',
-    #                                gap=200,
-    #                                subsize=1024,
-    #                                num_process=40)
-    # split_train_single.splitdata(1)
-    #
-    # split_val_single = splitbase('/data/mmlab-dota1.5/val',
-    #                              '/data/mmlab-dota1.5/split-1024/trainval1024',
-    #                              gap=200,
-    #                              subsize=1024,
-    #                              num_process=40)
-    # split_val_single.splitdata(1)
-
-    # dota-1.5 1024 split new
-    # split_train_single = splitbase('/data/mmlab-dota1.5/train',
-    #                                '/data/mmlab-dota1.5/split-1024_v2/trainval1024',
-    #                                gap=512,
-    #                                subsize=1024,
-    #                                num_process=40)
-    # split_train_single.splitdata(1)
-    #
-    # split_train_ms = splitbase('/data/mmlab-dota1.5/train',
-    #                                '/data/mmlab-dota1.5/split-1024_v2/trainval1024_ms',
-    #                                gap=512,
-    #                                subsize=1024,
-    #                                num_process=40)
-    # split_train_ms.splitdata(0.5)
-    # split_train_ms.splitdata(1.5)
-    #
-    # # val
-    # split_val_single = splitbase('/data/mmlab-dota1.5/val',
-    #                                '/data/mmlab-dota1.5/split-1024_v2/trainval1024',
-    #                                gap=512,
-    #                                subsize=1024,
-    #                                num_process=40)
-    # split_val_single.splitdata(1)
-    #
-    # split_val_ms = splitbase('/data/mmlab-dota1.5/val',
-    #                            '/data/mmlab-dota1.5/split-1024_v2/trainval1024_ms',
-    #                            gap=512,
-    #                            subsize=1024,
-    #                            num_process=40)
-    # split_val_ms.splitdata(0.5)
-    # split_val_ms.splitdata(1.5)
-    #
-    # # test
-    # split_test_single = splitbase('/data/mmlab-dota1.5/test',
-    #                                '/data/mmlab-dota1.5/split-1024_v2/test1024',
-    #                                gap=512,
-    #                                subsize=1024,
-    #                                num_process=40)
-    # split_test_single.splitdata(1)
-    #
-    # split_test_ms = splitbase('/data/mmlab-dota1.5/test',
-    #                            '/data/mmlab-dota1.5/split-1024_v2/test1024_ms',
-    #                            gap=512,
-    #                            subsize=1024,
-    #                            num_process=40)
-    # split_test_ms.splitdata(0.5)
-    # split_test_ms.splitdata(1.5)
-
-    # split_train_single = splitbase(r'/data/data_dj/dota2/train',
-    #                                r'/data/data_dj/dota2/split-1024-v2/trainval1024',
-    #                                gap=512,
-    #                                subsize=1024,
-    #                                num_process=40)
-    # split_train_single.splitdata(1)
-    #
-    # split_train_ms = splitbase(r'/data/data_dj/dota2/train',
-    #                            r'/data/data_dj/dota2/split-1024-v2/trainval1024_ms',
-    #                            gap=512,
-    #                            subsize=1024,
-    #                            num_process=40)
-    # split_train_ms.splitdata(0.5)
-    # split_train_ms.splitdata(1.5)
-    #
-    #
-    # split_val_single = splitbase(r'/data/data_dj/dota2/val',
-    #                                r'/data/data_dj/dota2/split-1024-v2/trainval1024',
-    #                                gap=512,
-    #                                subsize=1024,
-    #                                num_process=40)
-    # split_val_single.splitdata(1)
-    #
-    # split_val_ms = splitbase(r'/data/data_dj/dota2/val',
-    #                            r'/data/data_dj/dota2/split-1024-v2/trainval1024_ms',
-    #                            gap=512,
-    #                            subsize=1024,
-    #                            num_process=40)
-    # split_val_ms.splitdata(0.5)
-    # split_val_ms.splitdata(1.5)
-
-    split_test_single = splitbase(r'/home/dingjian/project/dota2/test-dev',
-                                  r'/home/dingjian/workfs/dota2_v2/split-1024-v2/test-dev1024',
-                                  gap=512,
-                                  subsize=1024,
-                                  num_process=16)
-    split_test_single.splitdata(1)
-
-    split_test_ms = splitbase(r'/home/dingjian/project/dota2/test-dev',
-                                  r'/home/dingjian/workfs/dota2_v2/split-1024-v2/test-dev1024_ms',
-                                  gap=512,
-                                  subsize=1024,
-                                  num_process=16)
-    # split_test_ms.splitdata(1)
-    split_test_ms.splitdata(0.5)
-    split_test_ms.splitdata(1.5)
+    # split.splitdata(2)
+    split.splitdata(0.4)

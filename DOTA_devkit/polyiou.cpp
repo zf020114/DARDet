@@ -118,7 +118,12 @@ double iou_poly(vector<double> p, vector<double> q) {
     }
     double inter_area = intersectArea(ps1, n1, ps2, n2);
     double union_area = fabs(area(ps1, n1)) + fabs(area(ps2, n2)) - inter_area;
-    double iou = inter_area / union_area;
+    double iou = 0;
+    if (union_area == 0) {
+        iou = (inter_area + 1) / (union_area + 1);
+    } else {
+        iou = inter_area / union_area;
+    }
 
 //    cout << "inter_area:" << inter_area << endl;
 //    cout << "union_area:" << union_area << endl;
@@ -127,14 +132,18 @@ double iou_poly(vector<double> p, vector<double> q) {
     return iou;
 }
 //
-//int main(){
-//    double p[8] = {0, 0, 1, 0, 1, 1, 0, 1};
-//    double q[8] = {0.5, 0.5, 1.5, 0.5, 1.5, 1.5, 0.5, 1.5};
-//    vector<double> P(p, p + 8);
-//    vector<double> Q(q, q + 8);
-//    iou_poly(P, Q);
-//    return 0;
-//}
+int main(){
+
+    double p[8] = {6.86000000e+02,   2.97600000e+03,   7.09000000e+02,   2.97600000e+03,
+              7.24000000e+02,   2.97600000e+03,   7.01000000e+02,   2.97600000e+03};
+    double q[8] = { 6.86000000e+02,   2.97600000e+03,   7.09000000e+02,   2.97600000e+03,
+   7.24000000e+02,   2.97600000e+03,   7.01000000e+02,   2.97600000e+03};
+    vector<double> P(p, p + 8);
+    vector<double> Q(q, q + 8);
+    double iou = iou_poly(P, Q);
+    printf("iou_poly: %f\n", iou);
+    return 0;
+}
 
 //int main(){
 //    double p[8] = {0, 0, 1, 0, 1, 1, 0, 1};

@@ -10,35 +10,46 @@
     search for PATH_TO_BE_CONFIGURED to config the paths
     Note, the evaluation is on the large scale images
 """
-import xml.etree.ElementTree as ET
-
+import matplotlib.pyplot as plt
+# import cPickle
 import numpy as np
-
-try:
-    from polyiou import polyiou
-except:
-    from DOTA_devkit.polyiou import polyiou
-    
-from mmdet.core import rotated_box_to_poly_single
+import os
+import polyiou
+import xml.etree.ElementTree as ET
+from functools import partial
 
 
 def parse_gt(filename):
+    """
+    :param filename: ground truth file to parse
+    :return: all instances in a picture
+    """
     objects = []
-    tree = ET.parse(filename)
-    root = tree.getroot()
-    for obj in root.findall('HRSC_Objects')[0].findall('HRSC_Object'):
-        object_struct = {}
-        object_struct['name'] = 'ship'
-        object_struct['difficult'] = int(obj.find('difficult').text)
-        bbox = []
-        for key in ['mbox_cx', 'mbox_cy', 'mbox_w', 'mbox_h', 'mbox_ang']:
-            bbox.append(obj.find(key).text)
-        # Coordinates may be float type
-        cx, cy, w, h, a = list(map(float, bbox))
-        bbox = [cx, cy, w, h, a]
-        poly = rotated_box_to_poly_single(bbox)
-        object_struct['bbox'] = poly.tolist()
-        objects.append(object_struct)
+    with  open(filename, 'r') as f:
+        while True:
+            line = f.readline()
+            if line:
+                splitlines = line.strip().split(' ')
+                object_struct = {}
+                if (len(splitlines) < 9):
+                    continue
+                object_struct['name'] = splitlines[8]
+
+                if (len(splitlines) == 9):
+                    object_struct['difficult'] = 0
+                elif (len(splitlines) == 10):
+                    object_struct['difficult'] = int(splitlines[9])
+                object_struct['bbox'] = [float(splitlines[0]),
+                                         float(splitlines[1]),
+                                         float(splitlines[2]),
+                                         float(splitlines[3]),
+                                         float(splitlines[4]),
+                                         float(splitlines[5]),
+                                         float(splitlines[6]),
+                                         float(splitlines[7])]
+                objects.append(object_struct)
+            else:
+                break
     return objects
 
 
@@ -152,7 +163,7 @@ def voc_eval(detpath,
         lines = f.readlines()
 
     splitlines = [x.strip().split(' ') for x in lines]
-    image_ids = [x[0] for x in splitlines]
+    image_ids = [x[0].split('.')[0] for x in splitlines]
     confidence = np.array([float(x[1]) for x in splitlines])
 
     # print('check confidence: ', confidence)
@@ -262,37 +273,20 @@ def voc_eval(detpath,
 
 
 def main():
-    detpath = r'work_dirs/s2anet_r50_fpn_3x_hrsc2016/result_raw/Task1_{:s}.txt'
+    detpath = r'/your_ReDet_path/work_dirs/Task1_{:s}.txt'
     annopath = r'data/HRSC2016/Test/labelTxt/{:s}.txt'  # change the directory to the path of val/labelTxt, if you want to do evaluation on the valset
     imagesetfile = r'data/HRSC2016/Test/test.txt'
 
-    # For HRSC2016
-    classnames = ['ship']
-    classaps = []
-    map = 0
-    for classname in classnames:
-        print('classname:', classname)
-        rec, prec, ap = voc_eval(detpath,
-                                 annopath,
-                                 imagesetfile,
-                                 classname,
-                                 ovthresh=0.5,
-                                 use_07_metric=True)
-        map = map + ap
-        # print('rec: ', rec, 'prec: ', prec, 'ap: ', ap)
-        print('ap: ', ap)
-        classaps.append(ap)
+    aps = []
+    for iou_thr in [0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95]:
+        rec, prec, ap = voc_eval(detpath, annopath, imagesetfile, 'ship', ovthresh=iou_thr, use_07_metric=True)
+        aps.append(ap * 100)
 
-        # umcomment to show p-r curve of each category
-        # plt.figure(figsize=(8,4))
-        # plt.xlabel('recall')
-        # plt.ylabel('precision')
-        # plt.plot(rec, prec)
-    # plt.show()
-    map = map / len(classnames)
-    print('map:', map)
-    classaps = 100 * np.array(classaps)
-    print('classaps: ', classaps)
+    ap_50 = aps[0]
+    ap_75 = aps[5]
+    map = np.array(aps).mean()
+
+    print('AP50: {:.2f}\tAP75: {:.2f}\t mAP: {:.2f}'.format(ap_50, ap_75, map))
 
 
 if __name__ == '__main__':
