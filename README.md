@@ -1,5 +1,5 @@
 # DARDet
-**PyTorch implementation of "*DARDet: A Dense Anchor-free Rotated Object Detector in Aerial Images*",  [<a href="https://raw.github.com/zf020114/DARDet/master/Figs/GRSL.pdf">pdf</a>].**<br><br>
+**PyTorch implementation of "*DARDet: A Dense Anchor-free Rotated Object Detector in Aerial Images*",  [<a href="https://arxiv.org/abs/2110.01025">pdf</a>].**<br><br>
 
 
 ## *Highlights:*
@@ -97,6 +97,8 @@ If mmcv and mmcv-full are both installed, there will be `ModuleNotFoundError`.
 
 4. Clone the DARDet repository.
 
+    ```shell
+    git clone https://github.com/zf020114/DARDet.git
     cd DARDet
     ```
 
@@ -115,7 +117,8 @@ If mmcv and mmcv-full are both installed, there will be `ModuleNotFoundError`.
     ```
 
 ## Prepare DOTA dataset.
-    It is recommended to symlink the dataset root to `ReDet/data`.
+
+    It is recommended to symlink the dataset root to `DARDet/data`.
 
     Here, we give an example for single scale data preparation of DOTA-v1.5.
 
@@ -146,7 +149,7 @@ If mmcv and mmcv-full are both installed, there will be `ModuleNotFoundError`.
          └── images
     ```
     For data preparation with data augmentation, refer to "DOTA_devkit/prepare_dota1_5_v2.py"
-
+You can ues ./tools/show_dataloder.py to visual the data using in networks.
 
 Examples:
 
@@ -161,6 +164,7 @@ python tools/test.py configs/DARDet/dardet_r50_fpn_1x_dcn_val.py \
 ```
 *If you want to evaluate the result on DOTA test-dev, zip the files in ```work_dirs/dardet_r50_fpn_1x_dcn_val/result_after_nms``` and submit it to the  [evaluation server](https://captain-whu.github.io/DOTA/index.html).
 
+You can set "--show-dir" to a given path for visualing the test results.
 
 ## Inference
 To inference multiple images in a folder, you can run:
@@ -168,6 +172,7 @@ To inference multiple images in a folder, you can run:
 ```
 python demo/demo_inference.py ${CONFIG_FILE} ${CHECKPOINT} ${IMG_DIR} ${OUTPUT_DIR}
 ```
+
 
 ## Train a model
 
@@ -224,6 +229,16 @@ If you have just multiple machines connected with ethernet, you can refer to
 pytorch [launch utility](https://pytorch.org/docs/stable/distributed_deprecated.html#launch-utility).
 Usually it is slow if you do not have high speed networking like infiniband.
 
+## Citation
+
+```
+@article{zhang2021dardet,
+  title={DARDet: A Dense Anchor-free Rotated Object Detector in Aerial Images},
+  author={Zhang, Feng and Wang, Xueying and Zhou, Shilin and Wang, Yingqian},
+  journal={arXiv preprint arXiv:2110.01025},
+  year={2021}
+}
+```
 
 ## Contact
 **Any question regarding this work can be addressed to [zhangfeng01@nudt.edu.cn](zhangfeng01@nudt.edu.cn).**

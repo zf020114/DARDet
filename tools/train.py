@@ -21,7 +21,7 @@ from mmdet.utils import collect_env, get_root_logger
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
     parser.add_argument('config', help='train config file path')
-    # parser.add_argument('--config', default='/media/zf/E/mmdetection213cuda101/vfnet_r50_fpn_1x_dcn_sample.py', help='train config file path')
+    # parser.add_argument('--config', default='/media/zf/E/mmdetection213_2080/dardet_r101_fpn_1x_dcn_rotate_ms_2x_test.py', help='train config file path')
     # parser.add_argument('--config', default='/media/zf/E/Dataset/dota1-split-1024/vfnet_r2101_fpn_1x_dcn_rotate.py', help='train config file path')#/media/zf/E/mmdetection2.13/configs/vfnet/vfnet_r50_fpn_1x_coco.py
     # parser.add_argument('--config', default='/media/zf/E/Dataset/dota_1024_s2anet2/centerttfnet_resnet18_dcnv2_140e_coco.py', help='train config file path')
     parser.add_argument('--work-dir', help='the dir to save logs and models')

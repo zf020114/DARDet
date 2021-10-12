@@ -81,51 +81,91 @@ def rotate_rect2cv(rotatebox):
 #     plt.close()
 
 
-def showAnns( rootdir,imgname, img, rboxes,colors):
-    plt.imshow(img)
-    plt.axis('off')
-    ax = plt.gca()
-    ax.set_autoscale_on(False)
-    polygons = []
-    color = []
-    circles = []
-    circles2 = []
-    circles3 = []
-    r = 5
+# def showAnns( rootdir,imgname, img, rboxes,colors):
+#     plt.imshow(img)
+#     plt.axis('off')
+#     ax = plt.gca()
+#     ax.set_autoscale_on(False)
+#     polygons = []
+#     color = []
+#     circles = []
+#     circles2 = []
+#     circles3 = []
+#     r = 5
+#     rboxes=rboxes.reshape(-1,8)
+#     # print('show: {}'.format( len(rboxes)))
+#     for i in range(rboxes.shape[0]):
+#         pts=rboxes[i]#[4:12]
+#         label=4#rbox[12]
+#         # pts = rotated_box_to_poly_single(rbox)
+#         try:
+#             poly=[(pts[0], pts[1]), (pts[2], pts[3]), (pts[4], pts[5]), (pts[6], pts[7])]
+#         except:
+#             print(pts)
+#         polygons.append(Polygon(poly))
+        
+#         color.append(colors[int(label)])
+
+#         circle = Circle((pts[0],pts[1]), r)
+#         circle2 = Circle((pts[2],pts[3]), r-1)
+#         circle3 = Circle((pts[4],pts[5]), r-2)
+#         circles.append(circle)
+#         circles2.append(circle2)
+#         circles3.append(circle3)
+#     p = PatchCollection(polygons, facecolors=color, linewidths=0, alpha=0.4)
+#     ax.add_collection(p)
+#     p = PatchCollection(polygons, facecolors='none', edgecolors=color, linewidths=2)
+#     ax.add_collection(p)
+#     p = PatchCollection(circles, facecolors='red')
+#     ax.add_collection(p)
+#     p = PatchCollection(circles2, facecolors='green')
+#     ax.add_collection(p)
+#     p = PatchCollection(circles3, facecolors='yellow')
+#     ax.add_collection(p)
+#     plt.imshow(img)
+#     # plt.show()
+#     plt.savefig(os.path.join(rootdir, imgname), bbox_inches="tight", pad_inches=0.0)
+#     plt.close()
+
+
+   #这里注意的是，opencv imshow默认三通道顺序为bgr （imread读入的通道就是bgr，所以对应imshow也是bgr）
+    def vis_detections(im, class_name, dets, thresh=0.5):
+        """Draw detected bounding boxes."""
+        inds = np.where(dets[:, -1] >= thresh)[0]
+        if len(inds) == 0:
+            return
+    
+        # im = im[:, :, (2, 1, 0)]
+        for i in inds:
+            bbox = dets[i, :4]
+            score = dets[i, -1]
+            cv2.rectangle(im,(bbox[0], bbox[1]),( bbox[2],bbox[3]),(0,255,255), 2)
+            text='{:s} {:.3f}'.format(class_name, score)
+            cv2.putText(im, text, (int(bbox[0]), int(bbox[1] - 2)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 2)
+
+
+
+def showAnns( rootdir,imgname, img, rboxes,labels, CLASSES,colors):
+    # r = 5
     rboxes=rboxes.reshape(-1,8)
     # print('show: {}'.format( len(rboxes)))
     for i in range(rboxes.shape[0]):
         pts=rboxes[i]#[4:12]
-        label=4#rbox[12]
-        # pts = rotated_box_to_poly_single(rbox)
-        try:
-            poly=[(pts[0], pts[1]), (pts[2], pts[3]), (pts[4], pts[5]), (pts[6], pts[7])]
-        except:
-            print(pts)
-        polygons.append(Polygon(poly))
-        
-        color.append(colors[int(label)])
 
-        circle = Circle((pts[0],pts[1]), r)
-        circle2 = Circle((pts[2],pts[3]), r-1)
-        circle3 = Circle((pts[4],pts[5]), r-2)
-        circles.append(circle)
-        circles2.append(circle2)
-        circles3.append(circle3)
-    p = PatchCollection(polygons, facecolors=color, linewidths=0, alpha=0.4)
-    ax.add_collection(p)
-    p = PatchCollection(polygons, facecolors='none', edgecolors=color, linewidths=2)
-    ax.add_collection(p)
-    p = PatchCollection(circles, facecolors='red')
-    ax.add_collection(p)
-    p = PatchCollection(circles2, facecolors='green')
-    ax.add_collection(p)
-    p = PatchCollection(circles3, facecolors='yellow')
-    ax.add_collection(p)
-    plt.imshow(img)
-    # plt.show()
-    plt.savefig(os.path.join(rootdir, imgname), bbox_inches="tight", pad_inches=0.0)
-    plt.close()
+        label=labels[i]
+        class_name=CLASSES[label]
+        color=np.array(np.clip(colors[label],1,255),np.int32)
+        color = (int(color[0]),int(color[1]),int(color[2]))
+        pts =np.array(pts.reshape((-1, 1, 2)), np.int32)
+        center=np.mean(pts.reshape(4,2),axis=0)
+        cv2.polylines(img, [pts], isClosed=True, color=color, thickness=2)
+        cv2.circle(img,( int(center[0]),int(center[1])),2,color=color)
+        text='{:s}'.format(class_name)
+        cv2.putText(img, text, (int(center[0]), int(center[1] )), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+    cv2.imwrite(os.path.join(rootdir, imgname),img)
+    # plt.savefig(os.path.join(rootdir, imgname), bbox_inches="tight", pad_inches=0.0)
+    # plt.close()
+
 
 def run_datatloader(cfg):
     """
@@ -144,6 +184,7 @@ def run_datatloader(cfg):
             workers_per_gpu=cfg.data.workers_per_gpu,
             dist= False,
             shuffle=False)
+    CLASSES=dataset.CLASSES
     outdir=os.path.join(cfg.data_root,'showdataloder')
     if not os.path.exists(outdir):
         os.makedirs(outdir)
@@ -162,14 +203,14 @@ def run_datatloader(cfg):
             0.466, 0.674, 0.188,
             0.301, 0.745, 0.933,
             0.635, 0.078, 0.184,
-            0.300, 0.300, 0.300,
-            0.600, 0.600, 0.600,
+            # 0.300, 0.300, 0.300,
+            # 0.600, 0.600, 0.600,
             1.000, 0.000, 0.000,
-            1.000, 0.500, 0.000,
+            # 1.000, 0.500, 0.000,
             0.749, 0.749, 0.000,
             0.000, 1.000, 0.000,
             0.000, 0.000, 1.000,
-            0.667, 0.000, 1.000,
+            # 0.667, 0.000, 1.000,
             0.333, 0.333, 0.000,
             0.333, 0.667, 0.000,
             0.333, 1.000, 0.000,
@@ -237,7 +278,7 @@ def run_datatloader(cfg):
             0.50, 0.5, 0
         ]
     ).astype(np.float32)
-    color_list = color_list.reshape((-1, 3)) #* 255
+    color_list = color_list.reshape((-1, 3)) * 255
     colors = [(color_list[_]).astype(np.uint8) \
             for _ in range(len(color_list))]
 
@@ -256,9 +297,9 @@ def run_datatloader(cfg):
             img = (img_hwc * std_value) + mean_value
             img = np.array(img, np.uint8)
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-            img_numpy_uint8 = np.array(img, np.uint8)
-            label = gt_label[batch_i]
-            boxes = gt_box[batch_i][0].cpu().numpy()
+            # img_numpy_uint8 = np.array(img, np.uint8)
+            labels = gt_label[batch_i][0].cpu().numpy()
+            # boxes = gt_box[batch_i][0].cpu().numpy()
             # gt_masks = gt_mask_bp_obbs_list(gt_masks)
             gt_mask_arrays=[]
             for i in  gt_masks:
@@ -268,9 +309,9 @@ def run_datatloader(cfg):
             gt_masks=gt_mask_arrays[0]
             # segmap=gt_mask[batch_i][0].cpu().numpy()
             # showAnns(outdir, filename, img, boxes[...,8:16],colors) 
-            showAnns(outdir, filename, img, gt_masks,colors) 
+            showAnns(outdir, filename, img, gt_masks,labels, CLASSES,colors) 
 
 if __name__ == '__main__':
     cfg = Config.fromfile(
-        '/media/zf/E/mmdetection213_2080/dprnet_r50_fpn_1x_dcn_ms_rotate_test.py')
+        '/media/zf/E/Dataset/2021ZKXT_aug_2/dardet_r50_show.py')
     run_datatloader(cfg)

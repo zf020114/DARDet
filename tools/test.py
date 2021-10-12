@@ -21,13 +21,26 @@ from mmdet.models import build_detector
 def parse_args():
     parser = argparse.ArgumentParser(  description='MMDet test (and eval) a model')
 
+    # work_dir = '/media/zf/E/Dataset/2021ZKXT_aug/workdir/DARDet_r50_1x'
+    # parser.add_argument('--config', default=os.path.join(work_dir,'dardet_r50_fpn_1x.py'),help='test config file path')
+    # parser.add_argument('--checkpoint', default=os.path.join(work_dir,'epoch_25.pth'),help='checkpoint file')
+
+
+    # work_dir = '/media/zf/E/Dataset/dota1-split-1024/workdir/DARDet_r101_DCN_rotate_msrange_1x'
+    # parser.add_argument('--config', default=os.path.join(work_dir,'dardet_r101_fpn_1x_dcn_rotate_msrange_1x_test.py'),help='test config file path')
+    # parser.add_argument('--checkpoint', default=os.path.join(work_dir,'epoch_27.pth'),help='checkpoint file')
+
     # work_dir = '/media/zf/E/Dataset/dota1-split-1024/workdir/DARDet_r2_101_DCN_rotate_ms'
     # parser.add_argument('--config', default='/media/zf/E/mmdetection213_2080/dardet_r2_101_fpn_1x_dcn_rotate_test.py',help='test config file path')
     # parser.add_argument('--checkpoint', default=os.path.join(work_dir,'epoch_24.pth'),help='checkpoint file')
 
-    work_dir = '/media/zf/E/Dataset/dota1-split-1024/workdir/DARDet_r50_DCN_rotate_msrange'
-    parser.add_argument('--config', default='/media/zf/E/mmdetection213_2080/dardet_r50_fpn_1x_dcn_rotate_ms_range_test.py',help='test config file path')
-    parser.add_argument('--checkpoint', default=os.path.join(work_dir,'epoch_12.pth'),help='checkpoint file')
+    # work_dir = '/media/zf/E/Dataset/dota1-split-1024/workdir/DARDet_r50_DCN_rotate_msrange'
+    # parser.add_argument('--config', default='/media/zf/E/mmdetection213_2080/dardet_r50_fpn_1x_dcn_rotate_ms_range_test.py',help='test config file path')
+    # parser.add_argument('--checkpoint', default=os.path.join(work_dir,'epoch_12.pth'),help='checkpoint file')
+
+    # work_dir = '/media/zf/E/Dataset/dota_1024_s2anet2/workdir/DARDet_r50_2080base'
+    # parser.add_argument('--config', default=os.path.join(work_dir,'dardet_r50_fpn_1x_dcn_val.py'),help='test config file path')
+    # parser.add_argument('--checkpoint', default=os.path.join(work_dir,'epoch_12.pth'),help='checkpoint file')
 
     # work_dir = '/media/zf/E/Dataset/dota1-split-1024/workdir/DARDet_r50_DCN_rotate_ms'
     # parser.add_argument('--config', default=os.path.join(work_dir,'dardet_r50_fpn_1x_dcn_rotate_test_ms.py'),help='test config file path')
@@ -41,11 +54,16 @@ def parse_args():
     # # parser.add_argument('--config', default=os.path.join(work_dir,'dprnet_r50_fpn_1x_dcn_test.py'),help='test config file path')/media/zf/E/mmdetection213_2080/dardet_r50_fpn_1x_dcn_val.py
     # parser.add_argument('--config', default='/media/zf/E/mmdetection213_2080/dardet_r50_fpn_1x_dcn_rotate_test.py',help='test config file path')
     # parser.add_argument('--checkpoint', default=os.path.join(work_dir,'epoch_24.pth'),help='checkpoint file')
-
-    parser.add_argument('--out',default= os.path.join( work_dir,'result.pkl'), help='output result file in pickle format')
+    
+    work_dir = '/media/zf/E/Dataset/2021ZKXT_aug_2/workdir/DARDet_r50_DCN_rotate_2x'
+    parser.add_argument('--config', default='/media/zf/E/Dataset/2021ZKXT_aug_2/dardet_r50_fpn_DCN_rotate_2x.py',help='test config file path')
+    parser.add_argument('--checkpoint', default=os.path.join(work_dir,'epoch_15.pth'),help='checkpoint file')
+    
     parser.add_argument('--show-dir', help='directory where painted images will be saved')
-    # parser.add_argument(
-    #     '--show-dir', default='/media/zf/E/Dataset/dota_1024_s2anet2/workdir/ttfnet/show',help='directory where painted images will be saved')
+    # parser.add_argument( '--show-dir', default=os.path.join(work_dir,'show'),help='directory where painted images will be saved')
+    if not os.path.exists(os.path.join(work_dir,'show')):
+        os.makedirs(os.path.join(work_dir,'show'))
+    parser.add_argument('--out',default= os.path.join( work_dir,'result_ISPRS_class10.pkl'), help='output result file in pickle format')
     parser.add_argument('--show', action='store_true', help='show results')
     parser.add_argument(
         '--fuse-conv-bn',

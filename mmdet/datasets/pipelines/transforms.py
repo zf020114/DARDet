@@ -237,11 +237,11 @@ class Resize:
         """Resize bounding boxes with ``results['scale_factor']``."""
         for key in results.get('bbox_fields', []):
             if len(results[key])==0:
-                return 
-            try:
-                bboxes = results[key] * results['scale_factor']
-            except:
-                print( results[key])
+                continue 
+            # try:
+            bboxes = results[key] * results['scale_factor']
+            # except:
+            #     print( results[key])
 
 
             if self.bbox_clip_border:
@@ -271,7 +271,7 @@ class Resize:
             if self.keep_ratio:
                 gt_seg = mmcv.imrescale(
                     results[key],
-                    results['scale'],
+                    results['scale'], 
                     interpolation='nearest',
                     backend=self.backend)
             else:

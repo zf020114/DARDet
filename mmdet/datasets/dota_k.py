@@ -21,60 +21,11 @@ from DOTA_devkit.dota_evaluation_task1 import voc_eval
 import shutil
 @DATASETS.register_module()
 class DotaKDataset(CustomDataset):
-    # NAME_LABEL_MAP = {
-    # 'E-3':       1,
-    # 'E-8':       2,
-    # 'RC-135VW': 3,
-    # 'RC-135S':   4,
-    # 'KC-135': 5,
-    # 'B-52': 6,
-    # 'C-5': 7,
-    # 'C-17': 8,
-    # 'Il-76': 9,
-    # 'A-50':  10,
-    # 'Tu-95': 11,
-    # 'P-8A':      12,
-    # 'KC-10': 13,
-    # 'F-22':      14,
-    # 'F-35':      15,
-    # 'F-16':      16,
-    # 'F-15':      17,
-    # 'F-18':    18,
-    # 'L-39':      19, 
-    # 'MiG-29': 20,
-    # 'MiG-31': 21,
-    # 'Su-35': 22,
-    # 'Su-30': 23,
-    # 'Su-27': 24,
-    # 'Typhoon': 25,
-    # 'Su-24': 26,
-    # 'Su-34': 27,
-    # 'A-10': 28,
-    # 'Su-25': 29,
-    # 'Tu-22M': 30,
-    # 'Yak-130': 31,
-    # 'B-1B': 32,
-    # 'B-2': 33,
-    # 'Tu-160': 34,
-    # 'C-130': 35,
-    # 'An-12': 36,
-    # 'An-24': 37,
-    # 'EP-3':      38,
-    # 'P-3C':      39,
-    # 'E-2':       40,
-    # 'C-2': 41,
-    # 'V-22': 42,
-    # 'RQ-4': 43,
-    # 'helicopter': 44,
-    # 'other': 45
-    # }
-    # CLASSES = []
-    # for name, label in NAME_LABEL_MAP.items():
-    #     CLASSES.append(name)
+
     CLASSES = ('plane', 'baseball-diamond', 'bridge', 'ground-track-field',
-               'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
-               'basketball-court', 'storage-tank', 'soccer-ball-field',
-               'roundabout', 'harbor', 'swimming-pool', 'helicopter')
+                'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
+                'basketball-court', 'storage-tank', 'soccer-ball-field',
+                'roundabout', 'harbor', 'swimming-pool', 'helicopter')
     def load_annotations(self, ann_file):
         """Load annotation from COCO style annotation file.
 
@@ -197,7 +148,7 @@ class DotaKDataset(CustomDataset):
             inter_h = max(0, min(y1 + h, img_info['height']) - max(y1, 0))
             if inter_w * inter_h == 0:
                 continue
-            if ann['area'] <= 0 or w < 1 or h < 1:
+            if ann['area'] <= 50 or max(w,h) < 10:
                 continue
             if ann['category_id'] not in self.cat_ids:
                 continue
@@ -553,7 +504,9 @@ class DotaKDataset(CustomDataset):
                     f'{ap[4]:.3f} {ap[5]:.3f}')
         if tmp_dir is not None:
             tmp_dir.cleanup()
+
         self.evaluate_rbox(results, eval_dir, gt_dir)
+
         return eval_results
 
 
@@ -571,7 +524,7 @@ class DotaKDataset(CustomDataset):
         generate_file_list(gt_dir,imagesetfile)
 
         print('Saving results to {}'.format(dst_raw_path))
-        # self.result_to_xml(results, os.path.join(work_dir,'pkl2xml'))
+        self.result_to_xml(results, os.path.join(work_dir,'pkl2xml'))
         # self.xml2dota_txt(work_dir,dst_raw_path)
         self.result_to_txt(results, os.path.join(dst_raw_path,'result2txtdirect'))
 
@@ -657,7 +610,7 @@ class DotaKDataset(CustomDataset):
                     #             f_out.write(temp_txt)
             f_out.close()
 
-    def result_to_xml(self, results, dst_path, score_threshold=0.3, nms_threshold=0.1,nms_maxnum=400 ):
+    def result_to_xml(self, results, dst_path, score_threshold=0.03, nms_threshold=0.1,nms_maxnum=400 ):
         CLASSES = self.CLASSES#dataset.CLASSESself.CLASSES#dataset.CLASSES
         # img_names = [img_info['filename'] for img_info in self.img_infos]
         # assert len(results) == len(img_names), 'len(results) != len(img_names)'
@@ -675,11 +628,14 @@ class DotaKDataset(CustomDataset):
                 bboxes=bboxes[keep]
                 #这里开始写转换回来的函数
                 if bboxes.shape[0]>0:
-                    rotateboxes,cv_rboxes=self.box2rotatexml(bboxes[...,5:],label)
+                    in_rbox = np.hstack((bboxes[...,5:10], bboxes[...,4:5]))
+                    rotateboxes,cv_rboxes=self.box2rotatexml(in_rbox, label)
                     #rotate nms
                     keep=nms_rotate_cpu(cv_rboxes,rotateboxes[:,5 ],nms_threshold, nms_maxnum)
                     rotateboxes=rotateboxes[keep]
                     img_boxes= np.vstack((img_boxes, rotateboxes))
+            # index= img_boxes[:,6]>0.4
+            # img_boxes=img_boxes[index]
             write_rotate_xml(dst_path,img_name,[1024 ,1024,3],0.5,'0.5',img_boxes.reshape((-1,7)),CLASSES)
 
     def box2rotatexml(self,bboxes,label):
