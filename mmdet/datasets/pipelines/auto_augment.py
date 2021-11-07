@@ -359,7 +359,7 @@ class Rotate:
                  center=None,
                  img_fill_val=128,
                  seg_ignore_label=255,
-                 prob=0.85,
+                 prob=0.5,
                  max_rotate_angle=180,
                  random_negative_prob=0.5,
                  out_range_ratio=0.7,
@@ -605,11 +605,11 @@ class Rotate:
         # angle = random_negative(self.angle, self.random_negative_prob)
         angle = np.random.rand() *self.max_rotate_angle #随即产生一个角度 一半概率使用 随即产生的角度，另一半概率使用90 180 270的角度
         nump_rand=np.random.rand()
-        if nump_rand <0.15:
+        if nump_rand >0.55:
             angle=90
-        elif nump_rand <0.30:
+        elif nump_rand >0.7:
             angle=180
-        elif nump_rand <0.45:
+        elif nump_rand >0.85:
             angle=270
         # print(angle)
         # self._rotate_img(results, angle, center, self.scale)

@@ -460,7 +460,7 @@ def cv2OriBox(cv_rect):
             angle+=90
         return np.array([cv_rect[0][0],cv_rect[0][1],cv_width,cv_height,angle/180*np.pi]) 
         
-def poly_to_rotated_box(polys,labels,label_list=[]):#这里转换为np使用cv2的方式获取旋转框
+def poly_to_rotated_box(polys,labels,refine_angle_with_label=False):#这里转换为np使用cv2的方式获取旋转框
     """
     polys:n*8
     poly:[x0,y0,x1,y1,x2,y2,x3,y3]
@@ -472,9 +472,9 @@ def poly_to_rotated_box(polys,labels,label_list=[]):#这里转换为np使用cv2�
     for i in range(poly.shape[0]):
         rect = cv2.minAreaRect(poly[i].reshape(-1,2))
         outpoly=cv2OriBox(rect)
-        if len(label_list)>0:
+        if refine_angle_with_label:
             label=labels[i]
-            if label in label_list:# 目标是 storage-tank or roundabout
+            if label==9 or label==11:# 目标是 storage-tank or roundabout
                 outpoly=np.array([outpoly[0],outpoly[1],(outpoly[2]+outpoly[3])/2,(outpoly[2]+outpoly[3])/2,0]) 
         outpolys.append(outpoly)
     outpolys=np.array(outpolys)

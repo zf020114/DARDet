@@ -90,7 +90,6 @@ class DARDetHead(ATSSHead, FCOSHead):
                  loss_rbox_refine=dict( type='RotatedIoULoss', loss_weight=2.0),
                  norm_cfg=dict(type='GN', num_groups=32, requires_grad=True),
                  use_atss=True,
-                 circle_id=[],
                  anchor_generator=dict(
                      type='AnchorGenerator',
                      ratios=[1.0],
@@ -151,7 +150,6 @@ class DARDetHead(ATSSHead, FCOSHead):
         self.anchor_center_offset = anchor_generator['center_offset']
         self.num_anchors = self.anchor_generator.num_base_anchors[0]
         self.sampling = False
-        self.circle_id=circle_id
         if self.train_cfg:
             self.assigner = build_assigner(self.train_cfg.assigner)
             sampler_cfg = dict(type='PseudoSampler')
@@ -451,7 +449,7 @@ class DARDetHead(ATSSHead, FCOSHead):
             # pos_decoded_target_preds = distance2bbox(pos_points, pos_bbox_targets)
             pos_decoded_rbox_preds_angle = distance2rbox(pos_points, pos_bbox_preds)#解码直接预测的rbox
             pos_decoded_rbox_target= distance2bbox(pos_points, pos_rbox_targets)#[...,4:12])#解码回归的四个点
-            pos_decoded_rbox_target_angle=poly_to_rotated_box(pos_decoded_rbox_target, pos_labels, label_list=self.circle_id)
+            pos_decoded_rbox_target_angle=poly_to_rotated_box(pos_decoded_rbox_target, pos_labels,refine_angle_with_label=True)
             # iou_targets_ini = bbox_overlaps(
             #     pos_decoded_bbox_preds,
             #     pos_decoded_target_preds.detach(),

@@ -162,32 +162,18 @@ if __name__ == '__main__':
                 name='box_iou_rotated_cuda',
                 module='mmdet.ops.box_iou_rotated',
                 sources=['src/box_iou_rotated_cpu.cpp', 'src/box_iou_rotated_cuda.cu']),
-            make_cuda_ext(
-                name='nms_rotated_cuda',
-                module='mmdet.ops.nms_rotated',
-                sources=['src/nms_rotated_cpu.cpp', 'src/nms_rotated_cuda.cu']),
+            # make_cuda_ext(
+            #     name='nms_rotated_cuda',
+            #     module='mmdet.ops.nms_rotated',
+            #     sources=['src/nms_rotated_cpu.cpp', 'src/nms_rotated_cuda.cu']),
             make_cuda_ext(
                 name='ml_nms_rotated_cuda',
                 module='mmdet.ops.ml_nms_rotated',
                 sources=['src/nms_rotated_cpu.cpp', 'src/nms_rotated_cuda.cu']),
-            make_cuda_ext(
-                name='orn_cuda',
-                module='mmdet.ops.orn',
-                sources=['src/vision.cpp',
-                         'src/cpu/ActiveRotatingFilter_cpu.cpp', 'src/cpu/RotationInvariantEncoding_cpu.cpp',
-                         'src/cuda/ActiveRotatingFilter_cuda.cu', 'src/cuda/RotationInvariantEncoding_cuda.cu',
-                         ]),
 	        make_cuda_ext(
                 name='sort_vertices_cuda',
                 module='mmdet.ops.box_iou_rotated_diff',
                 sources=['src/sort_vert.cpp', 'src/sort_vert_kernel.cu',]),
-                            # make_cuda_ext(
-            #     name='deform_conv_cuda',
-            #     module='mmdet.ops.dcn',
-            #     sources=[
-            #         'src/deform_conv_cuda.cpp',
-            #         'src/deform_conv_cuda_kernel.cu'
-            #     ]),
         ],
         cmdclass={'build_ext': BuildExtension},
         zip_safe=False)

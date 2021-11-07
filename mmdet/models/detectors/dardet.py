@@ -10,7 +10,6 @@ from shapely.geometry import *
 from PIL import Image
 from torchvision import transforms
 import torch.nn.functional as F
-from mmcv.image import imread, imwrite
 
 def write_rotate_xml(output_floder,img_name,size,gsd,imagesource,gtbox_label,CLASSES):#size,gsd,imagesource#将检测结果表示为中科星图比赛格式的程序,这里用folder字段记录gsd
     ##添加写出为xml函数
@@ -338,107 +337,21 @@ class DARDet(SingleStageDetector):
                     # rotateboxes.append([bbox[0],bbox[1],bbox[3],bbox[2],bbox[4]+np.pi/2,bbox[5],class_id])
         return np.array(rotateboxes)
 
-    def drow_points(self,img,points,labels,class_names=None,
-                    score_thr=0.3,show=False,win_name='',thickness=1.0,font_scale=1.0,
-                    wait_time=0,
-                    out_file=None):
+    def drow_points(self,img,points,score_thr=0.3):
         if points.shape[0]>0:
             index=points[:,0]>score_thr
             points=points[index]
             for i in range(points.shape[0]):
-                rbox=points[i][1:]    
-                p_rotate=np.int32(rbox.reshape(-1,2))
-                # cv2.circle(img, (int(rbox[0]), int(rbox[1])), 5, (0,255,0), -1)
-                # cv2.circle(img, (int(rbox[2]), int(rbox[3])), 4, (0,0,255), -1)
-                # cv2.circle(img, (int(rbox[4]), int(rbox[5])), 3, (255,0,0), -1)
-                # cv2.circle(img, (int(rbox[6]), int(rbox[7])), 2, (255,0,255), -1)
-                # p_rotate=np.int32(np.vstack((rbox[0:2],rbox[2:4],rbox[4:8],rbox[8:10])))  
-                cv2.polylines(img,[np.array(p_rotate)],True,self.color_list[int(labels[i])],thickness)
-                # label_text = class_names[labels[i]] if class_names is not None else f'cls {labels[i]}'
+                rbox=points[i][1:]                                                       #BRG
+                cv2.circle(img, (int(rbox[0]), int(rbox[1])), 5, (0,255,0), -1)
+                cv2.circle(img, (int(rbox[2]), int(rbox[3])), 4, (0,0,255), -1)
+                cv2.circle(img, (int(rbox[4]), int(rbox[5])), 3, (255,0,0), -1)
+                cv2.circle(img, (int(rbox[6]), int(rbox[7])), 2, (255,0,255), -1)
+                # if rbox.shape[1]>7:
+                #     cv2.circle(img, (int(rbox[8]), int(rbox[9])), 4, (0,0,0), -1)
+                #     for j in range(9):
+                #         cv2.circle(img, (int(rbox[10+j*2]), int(rbox[11+j*2])), 3, (0,255,255), -1)
                 
-                # label_text += f'|{points[i][0] :.02f}'
-                # index=np.argmin(p_rotate[:,1])
-                # bbox_int=p_rotate[index]
-                # cv2.putText(img, label_text, (bbox_int[0], bbox_int[1] - 2),
-                #             cv2.FONT_HERSHEY_COMPLEX, font_scale, self.color_list[int(labels[i])])
-
-        if show:
-            mmcv.imshow(img, win_name, wait_time)
-        if out_file is not None:
-            imwrite(img, out_file)
-        return img
-
-    
-    def imshow_det_rboxes(img,
-                        bboxes,
-                        labels,
-                        class_names=None,
-                        score_thr=0,
-                        bbox_color='green',
-                        text_color='green',
-                        thickness=1,
-                        font_scale=0.5,
-                        show=True,
-                        win_name='',
-                        wait_time=0,
-                        out_file=None):
-        """Draw bboxes and class labels (with scores) on an image.
-
-        Args:
-            img (str or ndarray): The image to be displayed.
-            bboxes (ndarray): Bounding boxes (with scores), shaped (n, 4) or
-                (n, 5).
-            labels (ndarray): Labels of bboxes.
-            class_names (list[str]): Names of each classes.
-            score_thr (float): Minimum score of bboxes to be shown.
-            bbox_color (str or tuple or :obj:`Color`): Color of bbox lines.
-            text_color (str or tuple or :obj:`Color`): Color of texts.
-            thickness (int): Thickness of lines.
-            font_scale (float): Font scales of texts.
-            show (bool): Whether to show the image.
-            win_name (str): The window name.
-            wait_time (int): Value of waitKey param.
-            out_file (str or None): The filename to write the image.
-
-        Returns:
-            ndarray: The image with bboxes drawn on it.
-        """
-        assert bboxes.ndim == 2
-        assert labels.ndim == 1
-        assert bboxes.shape[0] == labels.shape[0]
-        # assert bboxes.shape[1] == 4 or bboxes.shape[1] == 5
-        img = imread(img)
-        img = np.ascontiguousarray(img)
-
-        if score_thr > 0:
-            # assert bboxes.shape[1] == 6
-            scores = bboxes[:, 0]
-            inds = scores > score_thr
-            bboxes = bboxes[inds, :]
-            labels = labels[inds]
- 
-
-        for bbox, label in zip(bboxes, labels):
-            bbox_int = bbox.astype(np.int32)
-            rbox=bboxes[i][1:]   
-            p_rotate=np.int32(np.vstack(rbox[0:2],rbox[2:4],rbox[4:8],rbox[8:10],))                                                    #BRG
-            cv2.polylines(img,[np.array(p_rotate)],True,color_val[int(label)],2)
-
-            left_top = (bbox_int[0], bbox_int[1])
-            right_bottom = (bbox_int[2], bbox_int[3])
-            cv2.rectangle(
-                img, left_top, right_bottom, bbox_color, thickness=thickness)
-            label_text = class_names[
-                label] if class_names is not None else f'cls {label}'
-            if len(bbox) > 4:
-                label_text += f'|{bbox[-1]:.02f}'
-            cv2.putText(img, label_text, (bbox_int[0], bbox_int[1] - 2),
-                        cv2.FONT_HERSHEY_COMPLEX, font_scale, text_color)
-
-        if show:
-            imshow(img, win_name, wait_time)
-        if out_file is not None:
-            imwrite(img, out_file)
         return img
 
     def show_result(self,
@@ -447,7 +360,7 @@ class DARDet(SingleStageDetector):
                     score_thr=0.3,
                     bbox_color='green',
                     text_color='green',
-                    thickness=2,
+                    thickness=1,
                     font_scale=0.5,
                     win_name='',
                     show=False,
@@ -515,139 +428,25 @@ class DARDet(SingleStageDetector):
             write_rotate_xml(os.path.dirname(out_file),out_file,[1024 ,1024,3],0.5,'0.5',rotateboxes.reshape((-1,8)),self.CLASSES)
 
         showboxs=np.hstack((bboxes[...,4:5],bboxes[...,10:]))
-                    
-        if out_file:
-            file_dir=os.path.dirname(out_file)
-            if not  os.path.exists(file_dir):
-                os.mkdir(file_dir)
-        img=self.drow_points(img,showboxs,labels,class_names=self.CLASSES,score_thr=score_thr,thickness=thickness,
+        img=self.drow_points(img,showboxs,score_thr=score_thr)
+
+        #draw bounding boxes
+        mmcv.imshow_det_bboxes(
+            img,
+            bboxes[:,0:5],
+            labels,
+            class_names=self.CLASSES,
+            score_thr=score_thr,
+            bbox_color=bbox_color,
+            text_color=text_color,
+            thickness=thickness,
             font_scale=font_scale,
             win_name=win_name,
             show=show,
             wait_time=wait_time,
             out_file=out_file)
 
-        #draw bounding boxes
-        # showboxs=np.hstack((bboxes[...,4:5],bboxes[...,10:]))
-        # self.imshow_det_rboxes(
-        #     img,
-        #     showboxs,
-        #     labels,
-        #     class_names=self.CLASSES,
-        #     score_thr=score_thr,
-        #     bbox_color=bbox_color,
-        #     text_color=text_color,
-        #     thickness=thickness,
-        #     font_scale=font_scale,
-        #     win_name=win_name,
-        #     show=show,
-        #     wait_time=wait_time,
-        #     out_file=out_file)
-        # imshow_det_bboxes(
-        #     img,
-        #     bboxes[:,0:5],
-        #     labels,
-        #     class_names=self.CLASSES,
-        #     score_thr=score_thr,
-        #     bbox_color=bbox_color,
-        #     text_color=text_color,
-        #     thickness=thickness,
-        #     font_scale=font_scale,
-        #     win_name=win_name,
-        #     show=show,
-        #     wait_time=wait_time,
-        #     out_file=out_file)
-
-        # if not (show or out_file):
-        #     warnings.warn('show==False and out_file is not specified, only '
-        #                     'result image will be returned')
-        #     return img
-    
-    color_list= np.array(
-        [
-            1.000, 1.000, 1.000,
-            0.850, 0.325, 0.098,
-            0.929, 0.694, 0.125,
-            0.494, 0.184, 0.556,
-            0.466, 0.674, 0.188,
-            0.301, 0.745, 0.933,
-            0.635, 0.078, 0.184,
-            0.300, 0.300, 0.300,
-            0.600, 0.600, 0.600,
-            1.000, 0.000, 0.000,
-            1.000, 0.500, 0.000,
-            0.749, 0.749, 0.000,
-            0.000, 1.000, 0.000,
-            0.000, 0.000, 1.000,
-            0.667, 0.000, 1.000,
-            0.333, 0.333, 0.000,
-            0.333, 0.667, 0.000,
-            0.333, 1.000, 0.000,
-            0.667, 0.333, 0.000,
-            0.667, 0.667, 0.000,
-            0.667, 1.000, 0.000,
-            1.000, 0.333, 0.000,
-            1.000, 0.667, 0.000,
-            1.000, 1.000, 0.000,
-            0.000, 0.333, 0.500,
-            0.000, 0.667, 0.500,
-            0.000, 1.000, 0.500,
-            0.333, 0.000, 0.500,
-            0.333, 0.333, 0.500,
-            0.333, 0.667, 0.500,
-            0.333, 1.000, 0.500,
-            0.667, 0.000, 0.500,
-            0.667, 0.333, 0.500,
-            0.667, 0.667, 0.500,
-            0.667, 1.000, 0.500,
-            1.000, 0.000, 0.500,
-            1.000, 0.333, 0.500,
-            1.000, 0.667, 0.500,
-            1.000, 1.000, 0.500,
-            0.000, 0.333, 1.000,
-            0.000, 0.667, 1.000,
-            0.000, 1.000, 1.000,
-            0.333, 0.000, 1.000,
-            0.333, 0.333, 1.000,
-            0.333, 0.667, 1.000,
-            0.333, 1.000, 1.000,
-            0.667, 0.000, 1.000,
-            0.667, 0.333, 1.000,
-            0.667, 0.667, 1.000,
-            0.667, 1.000, 1.000,
-            1.000, 0.000, 1.000,
-            1.000, 0.333, 1.000,
-            1.000, 0.667, 1.000,
-            0.167, 0.000, 0.000,
-            0.333, 0.000, 0.000,
-            0.500, 0.000, 0.000,
-            0.667, 0.000, 0.000,
-            0.833, 0.000, 0.000,
-            1.000, 0.000, 0.000,
-            0.000, 0.167, 0.000,
-            0.000, 0.333, 0.000,
-            0.000, 0.500, 0.000,
-            0.000, 0.667, 0.000,
-            0.000, 0.833, 0.000,
-            0.000, 1.000, 0.000,
-            0.000, 0.000, 0.167,
-            0.000, 0.000, 0.333,
-            0.000, 0.000, 0.500,
-            0.000, 0.000, 0.667,
-            0.000, 0.000, 0.833,
-            0.000, 0.000, 1.000,
-            0.000, 0.000, 0.000,
-            0.143, 0.143, 0.143,
-            0.286, 0.286, 0.286,
-            0.429, 0.429, 0.429,
-            0.571, 0.571, 0.571,
-            0.714, 0.714, 0.714,
-            0.857, 0.857, 0.857,
-            0.000, 0.447, 0.741,
-            0.50, 0.5, 0
-        ]
-    ).astype(np.float32)
-    color_list = np.int32(color_list.reshape((-1, 3)) * 255)
-    color_list=color_list.tolist()
-    # colors = [(color_list[_]).astype(np.uint8) \
-    #         for _ in range(len(color_list))]
+        if not (show or out_file):
+            warnings.warn('show==False and out_file is not specified, only '
+                            'result image will be returned')
+            return img

@@ -34,7 +34,7 @@ from .yolo_head import YOLOV3Head
 from .yolof_head import YOLOFHead
 from .centernet_ttf_head import CenterTTFNetHead
 from .dardet_head import DARDetHead
-from .vfnet1_head import VFNet1Head
+# from .vfnet1_head import VFNet1Head
 # from .ttfnet_head import TTFNetHead
 __all__ = [
     'AnchorFreeHead', 'AnchorHead', 'GuidedAnchorHead', 'FeatureAdaption',
@@ -46,5 +46,5 @@ __all__ = [
     'SABLRetinaHead', 'CentripetalHead', 'VFNetHead', 'StageCascadeRPNHead',
     'CascadeRPNHead', 'EmbeddingRPNHead', 'LDHead', 'CascadeRPNHead',
     'AutoAssignHead', 'DETRHead', 'YOLOFHead', 'DeformableDETRHead',
-    'CenterNetHead','CenterTTFNetHead','DARDetHead','VFNet1Head'
+    'CenterNetHead','CenterTTFNetHead','DARDetHead'
 ]#'TTFNetHead'

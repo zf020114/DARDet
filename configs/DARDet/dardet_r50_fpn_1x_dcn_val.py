@@ -7,8 +7,8 @@ model = dict(
         depth=50,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
-        dcn=dict(type='DCNv2', deform_groups=1, fallback_on_stride=False),
-        stage_with_dcn=(False, True, True, True),
+        # dcn=dict(type='DCNv2', deform_groups=1, fallback_on_stride=False),
+        # stage_with_dcn=(False, True, True, True),
         frozen_stages=1,
         norm_cfg=dict(type='BN', requires_grad=True),
         norm_eval=True,
@@ -30,7 +30,7 @@ model = dict(
         feat_channels=256,
         strides=[8, 16, 32, 64, 128],
         center_sampling=False,
-        dcn_on_last_conv=True,#False
+        dcn_on_last_conv=False,#False  True
         use_atss=True,
         use_vfl=True,
         loss_cls=dict(
@@ -49,6 +49,7 @@ model = dict(
         pos_weight=-1,
         debug=False),
     test_cfg=dict(
+        rotate_test=True,
         nms_pre=2000,
         min_bbox_size=0,
         score_thr=0.05,
@@ -57,15 +58,15 @@ model = dict(
 
 # data setting
 dataset_type = 'DotaKDataset'
-data_root = '/media/zf/E/Dataset/dota1-split-1024/'
+data_root = '/media/zf/E/Dataset/dota_1024_s2anet2/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True, with_mask=True,poly2mask=False),
     dict(type='Resize', img_scale=(1024, 1024), keep_ratio=True),
+    # dict(type='Rotate', level=5, prob=0.5),
     dict(type='RandomFlip', direction=['horizontal','vertical', 'diagonal'], flip_ratio=0.5),
-    #dict(type='Rotate', prob=0.7),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
@@ -87,7 +88,7 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    samples_per_gpu=6,
+    samples_per_gpu=2,
     workers_per_gpu=2,
     train=dict(
         _delete_=True,
@@ -95,19 +96,23 @@ data = dict(
         oversample_thr=6e-2,
         dataset=dict(
             type=dataset_type,
-            ann_file=data_root + 'trainval1024/reppoint_keypoints_train2017.json',
-            img_prefix=data_root +  'trainval1024/images/',
+            ann_file=data_root + 'annotations/reppoint_keypoints_train2017.json',
+            img_prefix=data_root + 'train2017/',
             pipeline=train_pipeline)),
+    # train=dict(
+    #     type=dataset_type,
+    #     ann_file=data_root + 'annotations/reppoint_keypoints_train2017.json',
+    #     img_prefix=data_root + 'train2017/',
+    #     pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        samples_per_gpu=6,
         ann_file=data_root + 'annotations/reppoint_keypoints_val2017.json',
         img_prefix=data_root + 'val2017/',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'test1024/DOTA_test1024.json',
-        img_prefix=data_root + 'test1024/images/',
+        ann_file=data_root + 'annotations/reppoint_keypoints_val2017.json',
+        img_prefix=data_root + 'val2017/',
         pipeline=test_pipeline))
 
 # optimizer
@@ -119,11 +124,12 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=500,
     warmup_ratio=0.001,
-    step=[16, 22])
-runner = dict(type='EpochBasedRunner', max_epochs=24)
-work_dir = '/media/zf/E/Dataset/dota1-split-1024/workdir/DARDet_r50_DCN'
-load_from =None#'/media/zf/E/mmdetection213_2080/checkpoint/vfnet_r50_fpn_mdconv_c3-c5_mstrain_2x_coco_20201027pth-6879c318.pth'
-resume_from = '/media/zf/E/Dataset/dota1-split-1024/workdir/DARDet_r50_DCN_rotate/latest.pth'
+    step=[8, 11])
+runner = dict(type='EpochBasedRunner', max_epochs=12)
+work_dir = '/media/zf/E/Dataset/dota_1024_s2anet2/workdir/DARDet_r50_2080base'
+load_from =None#'/media/zf/E/mmdetection213_1080/checkpoint/vfnet_r50_fpn_mdconv_c3-c5_mstrain_2x_coco_20201027pth-6879c318.pth'
+resume_from =None# '/media/zf/E/Dataset/dota1-split-1024/workdir/vfnet_r50_50_ms/epoch_7.pth'
+
 evaluation = dict(interval=3, metric='bbox',eval_dir= work_dir,
         gt_dir='/media/zf/E/Dataset/dota_1024_s2anet2/valGTtxt/')
 checkpoint_config = dict(interval=1)
