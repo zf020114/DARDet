@@ -1,12 +1,12 @@
 # DARDet
-**PyTorch implementation of "*DARDet: A Dense Anchor-free Rotated Object Detector in Aerial Images*",  [<a href="https://arxiv.org/abs/2110.01025">pdf</a>].**<br><br>
+**PyTorch implementation of "*DARDet: A Dense Anchor-free Rotated Object Detector in Aerial Images*",  [<a href="https://arxiv.org/abs/2110.01025">IEEE GRSL, 2021</a>].**<br><br>
 
 
 ## *Highlights:*
 #### 1. *We develop a new dense anchor-free rotated object detection architecture (DARDet), which directly predicts five parameters of OBB at each spatial location.*
   <p align="center"> <img src="https://raw.github.com/zf020114/DARDet/master/Figs/framework.PNG" width="100%"></p>
  
-#### 2. *Our DARDet significantly achieve state-of-the-art performance on the DOTA, UCAS-AOD, and HRSC2016 datasets with high efficiency..*
+#### 2. *Our DARDet significantly achieves state-of-the-art performance on the DOTA, UCAS-AOD, and HRSC2016 datasets with high efficiency..*
   <p align="center"> <img src="https://raw.github.com/zf020114/DARDet/master/Figs/table.png" width="100%"></p>
   <p align="center"> <img src="https://raw.github.com/zf020114/DARDet/master/Figs/result.PNG" width="100%"></p>
 
@@ -19,7 +19,6 @@
 |DARDet         |    R-50-FPN     |   -     |  ✓    |   2x     |      12.7      |  78.74 |  [cfg](configs/DARDet/dardet_r50_fpn_1x_dcn_rotate_test.py)[model](https://pan.baidu.com/s/1VPsAB3Kb90IqJTluH6lFHw)     |
 
 
-## Installation
 ## Prerequisites
 
 - Linux or macOS (Windows is in experimental support)
@@ -116,13 +115,13 @@ If mmcv and mmcv-full are both installed, there will be `ModuleNotFoundError`.
     python setup.py build_ext --inplace
     ```
 
-## Prepare DOTA dataset.
+## Prepare the DOTA dataset.
 
     It is recommended to symlink the dataset root to `DARDet/data`.
 
     Here, we give an example for single scale data preparation of DOTA-v1.5.
 
-    First, make sure your initial data are in the following structure.
+    First, make sure your initial data is in the following structure.
     ```
     data/dota15
     ├── train
@@ -149,7 +148,7 @@ If mmcv and mmcv-full are both installed, there will be `ModuleNotFoundError`.
          └── images
     ```
     For data preparation with data augmentation, refer to "DOTA_devkit/prepare_dota1_5_v2.py"
-You can ues ./tools/show_dataloder.py to visual the data using in networks.
+You can use ./tools/show_dataloder.py to visualize the data using in networks.
 
 Examples:
 
@@ -164,10 +163,10 @@ python tools/test.py configs/DARDet/dardet_r50_fpn_1x_dcn_val.py \
 ```
 *If you want to evaluate the result on DOTA test-dev, zip the files in ```work_dirs/dardet_r50_fpn_1x_dcn_val/result_after_nms``` and submit it to the  [evaluation server](https://captain-whu.github.io/DOTA/index.html).
 
-You can set "--show-dir" to a given path for visualing the test results.
+You can set "--show-dir" to a given path for visualizng the test results.
 
 ## Inference
-To inference multiple images in a folder, you can run:
+To perform inference on multiple images in a folder, you can run:
 
 ```
 python demo/demo_inference.py ${CONFIG_FILE} ${CHECKPOINT} ${IMG_DIR} ${OUTPUT_DIR}
@@ -232,11 +231,12 @@ Usually it is slow if you do not have high speed networking like infiniband.
 ## Citation
 
 ```
-@article{zhang2021dardet,
+@article{dardet,
   title={DARDet: A Dense Anchor-free Rotated Object Detector in Aerial Images},
   author={Zhang, Feng and Wang, Xueying and Zhou, Shilin and Wang, Yingqian},
-  journal={arXiv preprint arXiv:2110.01025},
-  year={2021}
+  journal={IEEE Geoscience and Remote Sensing Letters},
+  year={2021},
+  publisher={IEEE}
 }
 ```
 
